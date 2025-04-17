@@ -8,9 +8,10 @@ import {
   ArrowRightIcon,
   KeyIcon
 } from '@heroicons/react/24/outline';
-import { getDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../config/firebase';
+import { signOut } from 'firebase/auth';
 
 interface LoginFormValues {
   email: string;
@@ -37,25 +38,50 @@ const LoginForm: React.FC<LoginFormProps> = ({
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Validação adicional de email
+      if (!values.email.trim()) {
+        throw new Error('Email é obrigatório');
+      }
+
+      // Validação adicional de senha
+      if (!values.password.trim()) {
+        throw new Error('Senha é obrigatória');
+      }
+
       console.log('LoginForm: Iniciando login');
       
-      // Aguardar o login
-      const result = await login(values.email, values.password);
+      const result = await login(values.email.trim(), values.password);
       console.log('LoginForm: Login realizado com sucesso, uid:', result.user.uid);
       
-      // Verificar o documento do usuário
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       console.log('LoginForm: Documento do usuário encontrado:', userDoc.exists());
-      
-      // Fechar o modal antes de navegar
-      onClose();
-      
-      // Aguardar um momento para o modal fechar
-      await new Promise(resolve => setTimeout(resolve, 100));
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
         console.log('LoginForm: Dados do usuário:', userData);
+        
+        // Verificação mais rigorosa dos campos obrigatórios
+        if (!userData.name?.trim() || !userData.companyName?.trim() || !userData.phone?.trim()) {
+          console.log('LoginForm: Documento do usuário incompleto');
+          await signOut(auth);
+          setError('Dados de cadastro incompletos. Por favor, complete seu cadastro.');
+          onSignupClick();
+          return;
+        }
+        
+        // Verificação de formato de telefone
+        const phoneRegex = /^\+?\d{10,14}$/;
+        if (!phoneRegex.test(userData.phone.replace(/\D/g, ''))) {
+          console.log('LoginForm: Formato de telefone inválido');
+          await signOut(auth);
+          setError('Formato de telefone inválido. Por favor, atualize seu cadastro.');
+          onSignupClick();
+          return;
+        }
+
+        onClose();
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         if (userData.hasCompletedDiagnostic) {
           console.log('LoginForm: Usuário já completou diagnóstico, indo para /report');
@@ -65,30 +91,27 @@ const LoginForm: React.FC<LoginFormProps> = ({
           navigate('/diagnostic', { replace: true });
         }
       } else {
-        console.log('LoginForm: Usuário sem documento, criando novo documento');
-        // Criar documento do usuário se não existir
-        await setDoc(doc(db, 'users', result.user.uid), {
-          email: result.user.email,
-          createdAt: serverTimestamp(),
-          hasCompletedDiagnostic: false
-        });
-        console.log('LoginForm: Redirecionando para /diagnostic');
-        navigate('/diagnostic', { replace: true });
+        console.log('LoginForm: Usuário sem documento, redirecionando para cadastro');
+        await signOut(auth);
+        setError('Conta não encontrada. Por favor, faça o cadastro.');
+        onSignupClick();
       }
     } catch (err: any) {
       console.error('LoginForm: Erro no login:', err);
       
-      // Tratamento específico de erros
+      // Tratamento de erros mais detalhado
       if (err.code === 'auth/user-not-found') {
-        setError('Usuário não encontrado');
+        setError('Email não cadastrado. Verifique o email ou crie uma nova conta.');
       } else if (err.code === 'auth/wrong-password') {
-        setError('Senha incorreta');
+        setError('Senha incorreta. Verifique sua senha ou use a opção "Esqueceu sua senha?"');
       } else if (err.code === 'auth/invalid-email') {
-        setError('Email inválido');
+        setError('Formato de email inválido. Use um email válido.');
       } else if (err.code === 'auth/too-many-requests') {
-        setError('Muitas tentativas. Tente novamente mais tarde');
+        setError('Muitas tentativas incorretas. Por segurança, tente novamente mais tarde.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
       } else {
-        setError('Erro ao fazer login. Tente novamente');
+        setError(err.message || 'Erro ao fazer login. Tente novamente.');
       }
     } finally {
       setIsLoading(false);

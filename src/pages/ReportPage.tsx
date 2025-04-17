@@ -4,10 +4,36 @@ import { useAuth } from "../contexts/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { motion } from "framer-motion";
-import { ArrowLeftIcon, ChartBarIcon, BoltIcon, RocketLaunchIcon, ArrowPathIcon, ClockIcon, ExclamationTriangleIcon, StarIcon, CheckCircleIcon, ExclamationCircleIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { 
+  ArrowLeftIcon, 
+  ChartBarIcon, 
+  BoltIcon, 
+  RocketLaunchIcon, 
+  ArrowPathIcon, 
+  ClockIcon, 
+  ExclamationTriangleIcon, 
+  StarIcon, 
+  CheckCircleIcon, 
+  ExclamationCircleIcon, 
+  ChevronRightIcon,
+  ClipboardIcon,
+  DocumentTextIcon,
+  ArrowTopRightOnSquareIcon,
+  InformationCircleIcon,
+  TrophyIcon,
+  CheckIcon,
+  BookOpenIcon,
+  ClipboardDocumentListIcon
+} from "@heroicons/react/24/outline";
 import { Rocket } from "lucide-react";
 import { Tab } from '@headlessui/react';
 import { AgendaModal } from "../components/AgendaModal";
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { areas } from '../data/areas';
+import { supabase } from "../config/supabase";
+import { classNames } from '../utils/classNames';
 
 interface DiagnosticData {
   completedAt: any;
@@ -27,6 +53,11 @@ interface DiagnosticData {
       quality: number;
     };
   };
+  history?: Array<{
+    date: any;
+    totalScore: number;
+    scores: Record<string, number>;
+  }>;
 }
 
 interface UserData {
@@ -55,40 +86,22 @@ interface ProgressCardProps {
   isFirstDiagnostic: boolean;
 }
 
-const areas = {
-  "Geração de Leads": {
-    icon: ChartBarIcon,
-    description: "Capacidade de atrair e captar potenciais clientes"
-  },
-  "Conversão": {
-    icon: RocketLaunchIcon,
-    description: "Eficiência em transformar leads em clientes"
-  },
-  "Canais de Aquisição": {
-    icon: BoltIcon,
-    description: "Diversidade e eficácia dos canais de marketing"
-  },
-  "Conteúdo": {
-    icon: ChartBarIcon,
-    description: "Qualidade e estratégia de conteúdo"
-  },
-  "CRM e Relacionamento": {
-    icon: ChartBarIcon,
-    description: "Gestão do relacionamento com clientes"
-  },
-  "Análise de Dados": {
-    icon: ChartBarIcon,
-    description: "Uso de dados para tomada de decisão"
-  },
-  "Presença Digital": {
-    icon: ChartBarIcon,
-    description: "Força da marca no ambiente digital"
-  },
-  "Automações": {
-    icon: ChartBarIcon,
-    description: "Nível de automação dos processos"
-  }
-} as const;
+interface TaskProgress {
+  completed: boolean;
+  points: number;
+}
+
+interface TaskRecommendation {
+  id: string;
+  area: string;
+  score: string;
+  tarefa_recomendada: string;
+  framework_sugerido: string;
+  nome_material: string;
+  tipo_cliente: string;
+  link_pdf: string;
+  progress?: TaskProgress;
+}
 
 const tabs: TabOption[] = [
   { id: 'overview', label: 'Visão Geral', icon: ChartBarIcon },
@@ -114,19 +127,19 @@ const getMetricClassification = (score: number, type: string): MetricClassificat
       { threshold: 3, label: 'Otimizado', color: 'text-green-600', bgColor: 'bg-green-50', description: 'Áreas bem gerenciadas' }
     ],
     efficiency: [
-      { threshold: 8, label: 'Avançado', color: 'text-green-600', bgColor: 'bg-green-50', description: 'Processos otimizados' },
-      { threshold: 6, label: 'Intermediário', color: 'text-yellow-600', bgColor: 'bg-yellow-50', description: 'Processos em desenvolvimento' },
-      { threshold: 3, label: 'Básico', color: 'text-gray-600', bgColor: 'bg-gray-50', description: 'Processos básicos' }
+      { threshold: 7, label: 'Avançado', color: 'text-green-600', bgColor: 'bg-green-50', description: 'Processos otimizados' },
+      { threshold: 5, label: 'Intermediário', color: 'text-yellow-600', bgColor: 'bg-yellow-50', description: 'Processos em desenvolvimento' },
+      { threshold: 3, label: 'Básico', color: 'text-red-600', bgColor: 'bg-red-50', description: 'Processos básicos' }
     ],
     engagement: [
-      { threshold: 8, label: 'Alto', color: 'text-purple-600', bgColor: 'bg-purple-50', description: 'Forte presença digital' },
-      { threshold: 6, label: 'Médio', color: 'text-purple-400', bgColor: 'bg-purple-50', description: 'Presença moderada' },
-      { threshold: 3, label: 'Baixo', color: 'text-purple-300', bgColor: 'bg-purple-50', description: 'Presença limitada' }
+      { threshold: 7, label: 'Alto', color: 'text-green-600', bgColor: 'bg-green-50', description: 'Forte presença digital' },
+      { threshold: 5, label: 'Médio', color: 'text-yellow-600', bgColor: 'bg-yellow-50', description: 'Presença moderada' },
+      { threshold: 3, label: 'Baixo', color: 'text-red-600', bgColor: 'bg-red-50', description: 'Presença limitada' }
     ],
     automation: [
-      { threshold: 8, label: 'Avançada', color: 'text-orange-600', bgColor: 'bg-orange-50', description: 'Altamente automatizado' },
-      { threshold: 6, label: 'Parcial', color: 'text-orange-400', bgColor: 'bg-orange-50', description: 'Parcialmente automatizado' },
-      { threshold: 3, label: 'Básica', color: 'text-orange-300', bgColor: 'bg-orange-50', description: 'Processos manuais' }
+      { threshold: 7, label: 'Avançada', color: 'text-green-600', bgColor: 'bg-green-50', description: 'Altamente automatizado' },
+      { threshold: 5, label: 'Parcial', color: 'text-yellow-600', bgColor: 'bg-yellow-50', description: 'Parcialmente automatizado' },
+      { threshold: 3, label: 'Básica', color: 'text-red-600', bgColor: 'bg-red-50', description: 'Processos manuais' }
     ]
   };
 
@@ -427,6 +440,53 @@ const calculateBarPercentage = (score: number, isTotal: boolean = false) => {
   }
 };
 
+// Substitua a função generatePDF por esta nova função de impressão
+const handlePrint = () => {
+  window.print();
+};
+
+const getScoreClassification = (score: number) => {
+  if (score >= 7) return 'Excelente';
+  if (score >= 5) return 'Bom';
+  return 'Precisa Melhorar';
+};
+
+// Adicione estas constantes no topo do arquivo
+const LEVEL_COLORS = {
+  1: { bg: 'from-blue-400 to-blue-500', text: 'text-blue-50' },
+  2: { bg: 'from-green-400 to-green-500', text: 'text-green-50' },
+  3: { bg: 'from-yellow-400 to-yellow-500', text: 'text-yellow-50' },
+  4: { bg: 'from-purple-400 to-purple-500', text: 'text-purple-50' },
+  5: { bg: 'from-red-400 to-red-500', text: 'text-red-50' }
+};
+
+const ACHIEVEMENTS = [
+  { 
+    icon: '🎯', 
+    label: 'Primeira Tarefa', 
+    description: 'Complete sua primeira tarefa',
+    xp: 50 
+  },
+  { 
+    icon: '⚡', 
+    label: 'Velocidade', 
+    description: 'Complete 3 tarefas em um dia',
+    xp: 100 
+  },
+  { 
+    icon: '🏆', 
+    label: 'Mestre', 
+    description: 'Alcance o nível 5',
+    xp: 200 
+  },
+  { 
+    icon: '🌟', 
+    label: 'Excelência', 
+    description: 'Complete todas as tarefas de uma área',
+    xp: 300 
+  }
+];
+
 export default function ReportPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -435,106 +495,63 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
-
-  const getScoreColor = (score: number) => {
-    if (score >= 7) return 'text-green-500';
-    if (score >= 5) return 'text-yellow-500';
-    return 'text-red-500';
-  };
-
-  const getScoreBackground = (score: number) => {
-    if (score >= 7) return 'bg-green-100';
-    if (score >= 5) return 'bg-yellow-100';
-    return 'bg-red-100';
-  };
-
-  const getScoreLabel = (score: number) => {
-    if (score >= 7) return 'Excelente';
-    if (score >= 5) return 'Bom';
-    return 'Precisa Melhorar';
-  };
-
-  const getProgressBarColor = (score: number) => {
-    if (score >= 7) return 'bg-green-500';
-    if (score >= 5) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
-  const getRecommendation = (area: string, score: number) => {
-    if (score < 7) {
-      switch (area) {
-        case "Geração de Leads":
-          return "Implemente estratégias básicas de captação de leads e comece a construir sua base de dados.";
-        case "Conversão":
-          return "Analise seus pontos de contato e identifique onde estão as principais perdas de conversão.";
-        case "Canais de Aquisição":
-          return "Diversifique seus canais de marketing e comece testando novas plataformas.";
-        case "Conteúdo":
-          return "Desenvolva um calendário editorial básico e comece a produzir conteúdo regularmente.";
-        case "CRM e Relacionamento":
-          return "Implemente um sistema básico de CRM para começar a organizar seus contatos.";
-        case "Análise de Dados":
-          return "Comece a coletar e analisar dados básicos de performance.";
-        case "Presença Digital":
-          return "Fortaleça sua presença nas principais redes sociais e mantenha consistência.";
-        case "Automações":
-          return "Identifique processos repetitivos que podem ser automatizados.";
-        default:
-          return "Desenvolva uma estratégia básica para esta área.";
-      }
-    }
-    return "";
-  };
+  const [selectedPeriod, setSelectedPeriod] = useState(3);
+  const [recommendations, setRecommendations] = useState<TaskRecommendation[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [taskProgress, setTaskProgress] = useState<Record<string, TaskProgress>>({});
+  const [userLevel, setUserLevel] = useState<number>(1);
+  const [userXP, setUserXP] = useState<number>(0);
+  const [showConfetti, setShowConfetti] = useState(false);
 
     const loadUserData = async () => {
       if (!currentUser) {
-      console.log("Usuário não autenticado, redirecionando...");
+    console.log("Usuário não autenticado, redirecionando...");
         navigate("/");
         return;
       }
 
       try {
-      console.log("Carregando dados do usuário...");
+    console.log("Carregando dados do usuário...");
         const userRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userRef);
 
         if (!userDoc.exists()) {
-        console.log("Documento do usuário não encontrado");
-        setError("Dados do usuário não encontrados");
+      console.log("Documento do usuário não encontrado");
+      setError("Dados do usuário não encontrados");
           return;
         }
 
-      const data = userDoc.data() as UserData;
-      console.log("Dados brutos do diagnóstico:", data.diagnostic);
+    const data = userDoc.data() as UserData;
+    console.log("Dados brutos do diagnóstico:", data.diagnostic);
 
-      if (!data.hasCompletedDiagnostic) {
-        console.log("Usuário sem diagnóstico, redirecionando...");
+    if (!data.hasCompletedDiagnostic) {
+      console.log("Usuário sem diagnóstico, redirecionando...");
           navigate("/diagnostic");
           return;
         }
 
-      // Garante que todos os dados necessários estejam presentes
-      const diagnostic = {
-        ...data.diagnostic,
-        scores: data.diagnostic?.scores || {},
-        totalScore: data.diagnostic?.totalScore || 0,
-        completedAt: data.diagnostic?.completedAt || null,
-        previousScore: data.diagnostic?.previousScore || null,
-        recommendations: data.diagnostic?.recommendations || [],
-        insights: data.diagnostic?.insights || []
-      };
+    // Garante que todos os dados necessários estejam presentes
+    const diagnostic = {
+      ...data.diagnostic,
+      scores: data.diagnostic?.scores || {},
+      totalScore: data.diagnostic?.totalScore || 0,
+      completedAt: data.diagnostic?.completedAt || null,
+      previousScore: data.diagnostic?.previousScore || null,
+      recommendations: data.diagnostic?.recommendations || [],
+      insights: data.diagnostic?.insights || []
+    };
 
-      console.log("Scores do diagnóstico:", diagnostic.scores);
-      console.log("Score total do diagnóstico:", diagnostic.totalScore);
+    console.log("Scores do diagnóstico:", diagnostic.scores);
+    console.log("Score total do diagnóstico:", diagnostic.totalScore);
 
-      setUserData({
-        ...data,
-        diagnostic
-      });
+    setUserData({
+      ...data,
+      diagnostic
+    });
 
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
-      setError("Erro ao carregar dados do relatório");
+    setError("Erro ao carregar dados do relatório");
       } finally {
         setLoading(false);
       }
@@ -543,6 +560,71 @@ export default function ReportPage() {
   useEffect(() => {
     loadUserData();
   }, [currentUser, navigate]);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!userData?.diagnostic?.scores) return;
+
+      try {
+        setLoadingTasks(true);
+        const clientType = userData.diagnostic.answers?.['9'] === '9a' ? 'B2C' : 'B2B';
+        const validAreas = Object.entries(userData.diagnostic.scores)
+          .filter(([area, score]) => {
+            const classification = getScoreClassification(score);
+            return area !== 'Perfil do Cliente' && 
+                   (classification === 'Precisa Melhorar' || classification === 'Bom');
+          })
+          .map(([area, score]) => ({
+            area,
+            score: getScoreClassification(score)
+          }));
+
+        const allRecommendations: TaskRecommendation[] = [];
+
+        for (const { area, score } of validAreas) {
+          const { data, error } = await supabase
+            .from('tarefas_recomendadas')
+            .select('*')
+            .eq('area', area)
+            .eq('score', score)
+            .eq('tipo_cliente', clientType);
+
+          if (!error && data) {
+            allRecommendations.push(...data);
+          }
+        }
+
+        setRecommendations(allRecommendations);
+      } catch (error) {
+        console.error('Erro ao buscar recomendações:', error);
+      } finally {
+        setLoadingTasks(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, [userData?.diagnostic?.scores, userData?.diagnostic?.answers]);
+
+  useEffect(() => {
+    const calculateTaskProgress = () => {
+      const newProgress = Object.fromEntries(
+        recommendations.map(task => [task.id, { completed: false, points: 0 }])
+      );
+      setTaskProgress(newProgress);
+    };
+
+    calculateTaskProgress();
+  }, [recommendations]);
+
+  useEffect(() => {
+    const calculateUserLevelAndXP = () => {
+      const totalPoints = Object.values(taskProgress).reduce((sum, task) => sum + (task.completed ? task.points : 0), 0);
+      setUserLevel(Math.floor(totalPoints / 100) + 1);
+      setUserXP(totalPoints % 100);
+    };
+
+    calculateUserLevelAndXP();
+  }, [taskProgress]);
 
   if (loading) {
     return (
@@ -590,8 +672,8 @@ export default function ReportPage() {
   const { diagnostic, name } = userData;
   const { scores = {}, totalScore = 0, completedAt } = diagnostic;
 
-  const renderTabContent = () => {
-    switch (activeTab) {
+  const renderTabContent = (tabId: string) => {
+    switch (tabId) {
       case 'overview':
         const metrics = calculateMetrics(diagnostic?.scores);
         const impactMetrics = calculateImpactMetrics(diagnostic?.scores);
@@ -642,7 +724,7 @@ export default function ReportPage() {
           }
         };
 
-        return (
+  return (
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Coluna Principal - Score */}
@@ -666,7 +748,7 @@ export default function ReportPage() {
                   <div className="text-center flex-1 flex flex-col items-center justify-center">
                     <div className={`text-8xl font-bold tracking-tight ${getScoreColor(totalScore/8)}`}>
                       {totalScore}
-                    </div>
+              </div>
                     <div className={`text-xl font-semibold mt-3 ${getScoreColor(totalScore/8)}`}>
                       {getScoreLabel(totalScore/8)}
                     </div>
@@ -860,7 +942,21 @@ export default function ReportPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Áreas em Atenção</h3>
                         <p className="text-sm text-gray-500">
-                          {areasEmAtencao.length} {areasEmAtencao.length === 1 ? 'área precisa' : 'áreas precisam'} de atenção
+                          {Object.entries(scores)
+                            .filter(([area]) => area !== 'Perfil do Cliente')
+                            .filter(([_, score]) => score <= 5)
+                            .length === 0 
+                              ? 'Nenhuma área precisa de atenção'
+                              : Object.entries(scores)
+                                .filter(([area]) => area !== 'Perfil do Cliente')
+                                .filter(([_, score]) => score <= 5)
+                                .length === 1 
+                                ? '1 área precisa de atenção'
+                                : `${Object.entries(scores)
+                                    .filter(([area]) => area !== 'Perfil do Cliente')
+                                    .filter(([_, score]) => score <= 5)
+                                    .length} áreas precisam de atenção`
+                          }
                         </p>
                       </div>
                     </div>
@@ -877,14 +973,14 @@ export default function ReportPage() {
                 <div className="px-6 py-4">
                   {Object.entries(scores)
                     .filter(([area]) => area !== 'Perfil do Cliente')
-                    .filter(([_, score]) => score < 7)
+                    .filter(([_, score]) => score <= 5)
                     .sort((a, b) => a[1] - b[1])
                     .map(([area, score]) => (
-                      <div key={area} className="bg-red-50 rounded-lg p-3 flex items-center justify-between">
+                      <div key={area} className="bg-red-50 rounded-lg p-4 flex items-center justify-between mb-2 last:mb-0">
                         <span className="text-sm font-medium text-gray-700">{area}</span>
-                        <span className="text-sm font-bold text-red-600">{score.toFixed(1)}</span>
-                      </div>
-                    ))}
+                        <span className="text-sm font-semibold text-red-600 bg-white px-3 py-1 rounded-md shadow-sm">{score.toFixed(1)}</span>
+            </div>
+          ))}
                 </div>
               </motion.div>
 
@@ -904,7 +1000,7 @@ export default function ReportPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Áreas em Destaque</h3>
                         <p className="text-sm text-gray-500">
-                          {Object.values(scores).filter(score => score >= 8).length} {Object.values(scores).filter(score => score >= 8).length === 1 ? 'área se destaca' : 'áreas se destacam'}
+                          {Object.values(scores).filter(score => score >= 7).length} {Object.values(scores).filter(score => score >= 7).length === 1 ? 'área se destaca' : 'áreas se destacam'}
                         </p>
                       </div>
                     </div>
@@ -915,18 +1011,18 @@ export default function ReportPage() {
                       Ver todas
                       <ChevronRightIcon className="w-4 h-4" />
                     </button>
-                  </div>
-                </div>
+        </div>
+      </div>
 
                 <div className="px-6 py-4">
                   {Object.entries(scores)
                     .filter(([area]) => area !== 'Perfil do Cliente')
-                    .filter(([_, score]) => score >= 8)
+                    .filter(([_, score]) => score >= 7)
                     .sort((a, b) => b[1] - a[1])
                     .map(([area, score]) => (
-                      <div key={area} className="bg-green-50 rounded-lg p-3 flex items-center justify-between">
+                      <div key={area} className="bg-green-50 rounded-lg p-4 flex items-center justify-between mb-2 last:mb-0">
                         <span className="text-sm font-medium text-gray-700">{area}</span>
-                        <span className="text-sm font-bold text-green-600">{score.toFixed(1)}</span>
+                        <span className="text-sm font-semibold text-green-600 bg-white px-3 py-1 rounded-md shadow-sm">{score.toFixed(1)}</span>
                       </div>
                     ))}
                 </div>
@@ -1098,10 +1194,18 @@ export default function ReportPage() {
                     
                     return (
                       <>
-                        <div className="text-[40px] font-bold text-green-500">
+                        <div className={`text-[40px] font-bold ${
+                          growthScore >= 7 ? 'text-green-600' :
+                          growthScore >= 5 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
                           {formattedScore}
                         </div>
-                        <div className="text-lg font-medium text-green-500 mt-1">
+                        <div className={`text-lg font-medium ${
+                          growthScore >= 7 ? 'text-green-600' :
+                          growthScore >= 5 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
                           {growthScore >= 7 ? 'Crescimento Acelerado' :
                            growthScore >= 5 ? 'Crescimento Moderado' :
                            'Crescimento Inicial'}
@@ -1109,7 +1213,11 @@ export default function ReportPage() {
                         {/* Barra de progresso com largura proporcional ao score (considerando 10 como máximo) */}
                         <div className="relative w-24 h-1.5 bg-gray-100 rounded-full mt-2">
                           <div 
-                            className="absolute left-0 h-1.5 bg-green-500 rounded-full"
+                            className={`absolute left-0 h-1.5 rounded-full ${
+                              growthScore >= 7 ? 'bg-green-500' :
+                              growthScore >= 5 ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}
                             style={{ width: `${(growthScore) * 10}%` }}
                           />
                         </div>
@@ -1121,18 +1229,18 @@ export default function ReportPage() {
                 <div className="mt-8 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Potencial de Mercado</span>
-                    <span className="text-sm font-medium text-green-500">
+                    <span className="text-sm font-medium text-blue-500">
                       {(() => {
                         const marketScore = scores['Geração de Leads'] || 0;
                         return marketScore >= 7 ? 'Alto' :
                                marketScore >= 5 ? 'Médio' :
                                'Em Desenvolvimento';
                       })()}
-                    </span>
+          </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Maturidade Digital</span>
-                    <span className="text-sm font-medium text-green-500">
+                    <span className="text-sm font-medium text-blue-500">
                       {(() => {
                         const digitalScore = (
                           (scores['Presença Digital'] || 0) +
@@ -1147,7 +1255,7 @@ export default function ReportPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Velocidade de Execução</span>
-                    <span className="text-sm font-medium text-green-500">
+                    <span className="text-sm font-medium text-blue-500">
                       {(() => {
                         const execScore = (
                           (scores['CRM e Relacionamento'] || 0) +
@@ -1160,7 +1268,7 @@ export default function ReportPage() {
                     </span>
                   </div>
                 </div>
-              </div>
+        </div>
 
               {/* Card de Tendências 2025 */}
               <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -1206,81 +1314,886 @@ export default function ReportPage() {
                 </div>
               </div>
             </div>
-          </div>
-        );
+
+            {/* Card de Comparação por Área */}
+            <div className="hidden md:block mt-8">
+              <div className="bg-white rounded-2xl shadow-lg p-8">
+                <div className="flex items-start space-x-3 mb-6">
+                  <div className="p-2 rounded-lg bg-blue-50">
+                    <ChartBarIcon className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">Comparação por Área</h3>
+                    <p className="text-sm text-gray-500">Seu desempenho vs. Média do Mercado</p>
+                  </div>
+                </div>
+
+                <div className="mt-8" style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <BarChart
+                      data={[
+                        { area: 'Geração de Leads', score: scores['Geração de Leads'] || 0, media: 7 },
+                        { area: 'Conversão', score: scores['Conversão'] || 0, media: 7 },
+                        { area: 'Canais de Aquisição', score: scores['Canais de Aquisição'] || 0, media: 7 },
+                        { area: 'Conteúdo', score: scores['Conteúdo'] || 0, media: 7 },
+                        { area: 'CRM e Relacionamento', score: scores['CRM e Relacionamento'] || 0, media: 7 },
+                        { area: 'Análise de Dados', score: scores['Análise de Dados'] || 0, media: 7 },
+                        { area: 'Presença Digital', score: scores['Presença Digital'] || 0, media: 7 },
+                        { area: 'Automações', score: scores['Automações'] || 0, media: 7 }
+                      ].sort((a, b) => b.score - a.score)} // Ordenar por score decrescente
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <YAxis domain={[0, 10]} />
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            const classification = 
+                              data.score >= 7 ? 'Excelente' :
+                              data.score >= 5 ? 'Bom' :
+                              'Precisa Melhorar';
+                            const color = 
+                              data.score >= 7 ? 'text-green-600' :
+                              data.score >= 5 ? 'text-yellow-600' :
+                              'text-red-600';
+                            return (
+                              <div className="bg-white shadow-lg rounded-lg p-3 border border-gray-100">
+                                <p className="font-medium text-gray-900 mb-1">{data.area}</p>
+                                <p className={`text-sm ${color}`}>
+                                  Score: {data.score.toFixed(1)} - {classification}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Média: {data.media.toFixed(1)}
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend verticalAlign="top" height={36} />
+                      <Bar
+                        dataKey="score"
+                        name="Seu Score"
+                      >
+                        {Object.entries(scores)
+                          .filter(([area]) => area !== 'Perfil do Cliente')
+                          .sort(([_, scoreA], [__, scoreB]) => scoreB - scoreA) // Ordenar por score decrescente
+                          .map(([_, score]) => (
+                            <Cell
+                              key={`cell-${score}`}
+                              fill={
+                                score >= 7 ? '#10B981' :  // Verde para Excelente
+                                score >= 5 ? '#EAB308' :  // Amarelo para Bom
+                                '#EF4444'                 // Vermelho para Precisa Melhorar
+                              }
+                            />
+                          ))}
+                      </Bar>
+                      <Bar
+                        dataKey="media"
+                        name="Média do Mercado"
+                        fill="#9CA3AF"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Evolução Temporal */}
+            <div className="mt-8">
+              <div className="bg-white rounded-2xl shadow-lg p-8">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 rounded-lg bg-purple-50">
+                      <ChartBarIcon className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Evolução Temporal</h3>
+                      <p className="text-sm text-gray-500">Histórico dos seus diagnósticos</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={selectedPeriod}
+                      className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      onChange={(e) => {
+                        const period = parseInt(e.target.value);
+                        setSelectedPeriod(period);
+                      }}
+                    >
+                      <option value="3">Últimos 3 meses</option>
+                      <option value="6">Últimos 6 meses</option>
+                      <option value="12">Último ano</option>
+                      <option value="0">Todo histórico</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-8" style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <LineChart
+                      data={(() => {
+                        const now = new Date(); // Adicione esta linha
+                        if (diagnostic.history && diagnostic.history.length > 0) {
+                          const sortedHistory = [...diagnostic.history].sort(
+                            (a, b) => a.date.toDate().getTime() - b.date.toDate().getTime()
+                          );
+                          
+                          const filteredHistory = selectedPeriod === 0 
+                            ? sortedHistory 
+                            : sortedHistory.filter(entry => {
+                                const entryDate = entry.date.toDate();
+                                const diffMonths = (now.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+                                return diffMonths <= selectedPeriod;
+                              });
+                          
+                          return filteredHistory.map(entry => ({
+                            date: entry.date.toDate(),
+                            score: entry.totalScore,
+                            media: 56
+                          }));
+                        }
+                        
+                        return diagnostic.previousScore 
+                          ? [
+                              { 
+                                date: new Date(diagnostic.completedAt.toDate().getTime() - (3 * 30 * 24 * 60 * 60 * 1000)), 
+                                score: diagnostic.previousScore, 
+                                media: 56 
+                              },
+                              { 
+                                date: diagnostic.completedAt.toDate(), 
+                                score: totalScore, 
+                                media: 56 
+                              }
+                            ]
+                          : [
+                              { 
+                                date: new Date(diagnostic.completedAt.toDate().getTime() - (3 * 30 * 24 * 60 * 60 * 1000)), 
+                                score: totalScore, 
+                                media: 56 
+                              },
+                              { 
+                                date: diagnostic.completedAt.toDate(), 
+                                score: totalScore, 
+                                media: 56 
+                              }
+                            ];
+                      })()}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(date) => new Date(date).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })}
+                      />
+                      <YAxis 
+                        domain={[0, 80]} 
+                        tickFormatter={(value) => `${value}pts`}
+                      />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            const scoreClass = 
+                              data.score >= 56 ? 'text-green-600' :
+                              data.score >= 40 ? 'text-yellow-600' :
+                              'text-red-600';
+                            
+                            return (
+                              <div className="bg-white shadow-lg rounded-lg p-4 border border-gray-100">
+                                <p className="font-medium text-gray-900 mb-2">
+                                  {new Date(data.date).toLocaleDateString('pt-BR', { 
+                                    month: 'long', 
+                                    year: 'numeric',
+                                    day: 'numeric'
+                                  })}
+                                </p>
+                                <div className="space-y-1">
+                                  <p className={`text-sm font-semibold ${scoreClass}`}>
+                                    Score Total: {data.score} pontos
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    Média do Mercado: {data.media} pontos
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {data.score >= 56 ? '🌟 Excelente' :
+                                     data.score >= 40 ? '👍 Bom' :
+                                     '⚠️ Precisa Melhorar'}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        name="Score Total"
+                        stroke="#8B5CF6"
+                        strokeWidth={3}
+                        dot={{ 
+                          r: 6, 
+                          fill: "#8B5CF6",
+                          strokeWidth: 2,
+                          stroke: "#fff"
+                        }}
+                        activeDot={{ 
+                          r: 8,
+                          stroke: "#8B5CF6",
+                          strokeWidth: 2
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="media"
+                        name="Média do Mercado"
+                        stroke="#9CA3AF"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Legenda de Status */}
+                <div className="mt-6 flex items-center justify-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-sm text-gray-600">Excelente (≥ 56pts)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <span className="text-sm text-gray-600">Bom (40-55pts)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-sm text-gray-600">Precisa Melhorar (≤ 39pts)</span>
+                  </div>
+                </div>
+        </div>
+      </div>
+    </div>
+  );
       case 'areas':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(scores)
-              .filter(([area]) => area !== 'Perfil do Cliente')
-              .map(([area, score], index) => {
-                const AreaIcon = areas[area as keyof typeof areas]?.icon || ChartBarIcon;
-                return (
-                  <motion.div
-                    key={area}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 * index }}
-                    className={`bg-white rounded-xl shadow-lg p-6 relative overflow-hidden group hover:shadow-xl transition-shadow border ${
-                      score >= 7 ? 'border-green-200' :
-                      score >= 5 ? 'border-yellow-200' :
-                      'border-red-200'
-                    }`}
+          <div className="space-y-8">
+            {/* Mapa de Impacto */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 rounded-lg bg-blue-50">
+                  <ChartBarIcon className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Mapa de Impacto</h3>
+                  <p className="text-sm text-gray-500">Análise de desempenho por área</p>
+                </div>
+              </div>
+
+              <div className="w-full" style={{ height: '400px' }}>
+                <ResponsiveContainer>
+                  <RadarChart 
+                    cx="50%" 
+                    cy="50%" 
+                    outerRadius="80%" 
+                    data={Object.entries(scores)
+                      .filter(([area]) => area !== 'Perfil do Cliente')
+                      .map(([area, score]) => ({
+                        area: area,
+                        score: score,
+                        fullMark: 10
+                      }))
+                    }
                   >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform"></div>
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-lg ${getScoreBackground(score)}`}>
-                            <AreaIcon className={`w-6 h-6 ${getScoreColor(score/8)}`} />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900">{area}</h3>
-                        </div>
-                        <div className={`text-2xl font-bold ${getScoreColor(score/8)}`}>
-                          {score}
-                        </div>
-                      </div>
+                    <PolarGrid gridType="polygon" stroke="#E5E7EB" />
+                    <PolarAngleAxis
+                      dataKey="area"
+                      tick={{ fill: '#4B5563', fontSize: 12 }}
+                    />
+                    <PolarRadiusAxis
+                      angle={90}
+                      domain={[0, 10]}
+                      tick={{ fill: '#4B5563', fontSize: 10 }}
+                    />
+                    <Radar
+                      name="Score"
+                      dataKey="score"
+                      stroke="#3B82F6"
+                      fill="#3B82F6"
+                      fillOpacity={0.3}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white shadow-lg rounded-lg p-3 border border-gray-100">
+                              <p className="font-medium text-gray-900 mb-1">{data.area}</p>
+                              <p className={`text-sm ${
+                                data.score >= 7 ? 'text-green-600' :
+                                data.score >= 5 ? 'text-yellow-600' :
+                                'text-red-600'
+                              }`}>
+                                Score: {data.score.toFixed(1)} / {data.fullMark}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
 
-                      <p className="text-gray-600 mb-4">{areas[area as keyof typeof areas]?.description}</p>
-                      
-                      <div className="relative pt-2">
-                        <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${calculateBarPercentage(score)}%` }}
-                            transition={{ duration: 1 }}
-                            className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
-                              score >= 7 ? 'bg-green-500' :
-                              score >= 5 ? 'bg-yellow-500' :
-                              'bg-red-500'
-                            }`}
-                          />
-                        </div>
-                      </div>
+              <div className="mt-6 flex items-center justify-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm text-gray-600">Excelente (≥ 7)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <span className="text-sm text-gray-600">Bom (5-6.9)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span className="text-sm text-gray-600">Precisa Melhorar (≤ 4.9)</span>
+                </div>
+              </div>
+            </div>
 
-                      {score < 7 && (
-                        <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
-                          <p className="text-sm text-red-700">
-                            {getRecommendation(area, score)}
-                          </p>
-                        </div>
-                      )}
+            {/* Áreas que Precisam Melhorar */}
+            <div className="space-y-4">
+              {(() => {
+                const areasQuePrecisamMelhorar = Object.entries(scores)
+                  .filter(([area]) => area !== 'Perfil do Cliente' && scores[area] < 5);
+                
+                if (areasQuePrecisamMelhorar.length === 0) return null;
+
+                return (
+                  <>
+                    <div className="flex items-center space-x-3 mb-6">
+                      <ExclamationTriangleIcon className="w-6 h-6 text-red-500" />
+                      <h3 className="text-xl font-semibold text-gray-900">Áreas que Precisam Melhorar</h3>
                     </div>
-                  </motion.div>
+                    <div className={classNames(
+                      'grid grid-cols-1 gap-6',
+                      areasQuePrecisamMelhorar.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'
+                    )}>
+                      {areasQuePrecisamMelhorar.map(([area, score], index) => {
+                        const areaData = areas[area as keyof typeof areas];
+                        const IconComponent = areaData?.icon || ChartBarIcon;
+                        return (
+                          <motion.div
+                            key={area}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 * index }}
+                            className="w-full bg-white rounded-3xl shadow-sm p-8 relative overflow-hidden border border-red-100"
+                          >
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="text-red-500">
+                                    <IconComponent className="w-6 h-6" />
+                                  </div>
+                                  <h3 className="text-xl font-semibold text-gray-900">{area}</h3>
+                                </div>
+                                <div className="text-2xl font-bold text-red-500">
+                                  {score}
+                                </div>
+                              </div>
+                              
+                              <p className="text-gray-600">{areas[area as keyof typeof areas]?.description}</p>
+                              
+                              <div className="relative pt-2">
+                                <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${calculateBarPercentage(score)}%` }}
+                                    transition={{ duration: 1 }}
+                                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="bg-red-50 rounded-2xl p-4">
+                                <p className="text-red-700">
+                                  {getRecommendation(area, score)}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </>
                 );
-              })}
+              })()}
+            </div>
+
+            {/* Áreas com Bom Desempenho */}
+            <div className="space-y-4">
+              {(() => {
+                const areasComBomDesempenho = Object.entries(scores)
+                  .filter(([area]) => area !== 'Perfil do Cliente' && scores[area] >= 5 && scores[area] < 7);
+                
+                if (areasComBomDesempenho.length === 0) return null;
+
+                return (
+                  <>
+                    <div className="flex items-center space-x-3 mb-6">
+                      <CheckCircleIcon className="w-6 h-6 text-yellow-500" />
+                      <h3 className="text-xl font-semibold text-gray-900">Áreas com Bom Desempenho</h3>
+                    </div>
+                    <div className="space-y-6">
+                      {areasComBomDesempenho.map(([area, score], index) => {
+                        const areaData = areas[area as keyof typeof areas];
+                        const IconComponent = areaData?.icon || ChartBarIcon;
+                        return (
+                          <motion.div
+                            key={area}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 * index }}
+                            className="w-full bg-white rounded-3xl shadow-sm p-8 relative overflow-hidden border border-yellow-100"
+                          >
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="text-yellow-500">
+                                    <IconComponent className="w-6 h-6" />
+                                  </div>
+                                  <h3 className="text-xl font-semibold text-gray-900">{area}</h3>
+                                </div>
+                                <div className="text-2xl font-bold text-yellow-500">
+                                  {score}
+                                </div>
+                              </div>
+                              
+                              <p className="text-gray-600">{areas[area as keyof typeof areas]?.description}</p>
+                              
+                              <div className="relative pt-2">
+                                <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${calculateBarPercentage(score)}%` }}
+                                    transition={{ duration: 1 }}
+                                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="bg-yellow-50 rounded-2xl p-4">
+                                <p className="text-yellow-700">
+                                  {getRecommendation(area, score)}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Áreas de Excelência */}
+            <div className="space-y-4">
+              {(() => {
+                const areasDeExcelencia = Object.entries(scores)
+                  .filter(([area]) => area !== 'Perfil do Cliente' && scores[area] >= 7);
+                
+                if (areasDeExcelencia.length === 0) return null;
+
+                return (
+                  <>
+                    <div className="flex items-center space-x-3 mb-6">
+                      <StarIcon className="w-6 h-6 text-green-500" />
+                      <h3 className="text-xl font-semibold text-gray-900">Áreas de Excelência</h3>
+                    </div>
+                    <div className="space-y-6">
+                      {areasDeExcelencia.map(([area, score], index) => {
+                        const areaData = areas[area as keyof typeof areas];
+                        const IconComponent = areaData?.icon || ChartBarIcon;
+                        return (
+                          <motion.div
+                            key={area}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 * index }}
+                            className="w-full bg-white rounded-3xl shadow-sm p-8 relative overflow-hidden border border-green-100"
+                          >
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="text-green-500">
+                                    <IconComponent className="w-6 h-6" />
+                                  </div>
+                                  <h3 className="text-xl font-semibold text-gray-900">{area}</h3>
+                                </div>
+                                <div className="text-2xl font-bold text-green-500">
+                                  {score}
+                                </div>
+                              </div>
+                              
+                              <p className="text-gray-600">{areas[area as keyof typeof areas]?.description}</p>
+                              
+                              <div className="relative pt-2">
+                                <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${calculateBarPercentage(score)}%` }}
+                                    transition={{ duration: 1 }}
+                                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="bg-green-50 rounded-2xl p-4">
+                                <p className="text-green-700">
+                                  {getRecommendation(area, score)}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
         );
       case 'tasks':
+        const groupedByArea = recommendations.reduce((acc, task) => {
+          if (!acc[task.area]) {
+            acc[task.area] = [];
+          }
+          acc[task.area].push(task);
+          return acc;
+        }, {} as Record<string, TaskRecommendation[]>);
+
+        // Ordenar áreas por prioridade (score mais baixo primeiro)
+        const sortedAreas = Object.entries(groupedByArea)
+          .sort(([, tasksA], [, tasksB]) => {
+            const scoreA = tasksA[0].score === 'Precisa Melhorar' ? 0 : 1;
+            const scoreB = tasksB[0].score === 'Precisa Melhorar' ? 0 : 1;
+            return scoreA - scoreB;
+          });
+
+        const getPriorityBadge = (score: string) => {
+          if (score === 'Precisa Melhorar') {
+            return { text: 'Alta Prioridade', bg: 'bg-red-50', textColor: 'text-red-700' };
+          }
+          return { text: 'Média Prioridade', bg: 'bg-yellow-50', textColor: 'text-yellow-700' };
+        };
+
+        const handleTaskComplete = (taskId: string) => {
+          const currentProgress = taskProgress[taskId] || { completed: false, points: 0 };
+          const isCompleting = !currentProgress.completed;
+
+          const newProgress = {
+            ...taskProgress,
+            [taskId]: {
+              completed: isCompleting,
+              points: isCompleting ? 100 : 0
+            }
+          };
+
+          setTaskProgress(newProgress);
+
+          if (isCompleting) {
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 2000);
+          }
+        };
+
         return (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <p className="text-gray-600 text-center">Em desenvolvimento...</p>
+          <div className="bg-white rounded-2xl shadow-lg">
+            <div className="flex flex-col">
+              {/* Cabeçalho */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-blue-50">
+                    <RocketLaunchIcon className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">Tarefas Recomendadas</h3>
+                    <p className="text-sm text-gray-500">Ações personalizadas baseadas no seu diagnóstico</p>
+                  </div>
+                </div>
+              </div>
+
+              {loadingTasks ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-blue-500 border-t-transparent"></div>
+                  <p className="text-gray-500 mt-4">Carregando suas tarefas personalizadas...</p>
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  <div className="p-4 rounded-full bg-gray-50">
+                    <ClipboardIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 mt-4 text-center">
+                    Nenhuma tarefa recomendada encontrada para o seu perfil.
+                  </p>
+                </div>
+              ) : (
+                <Tab.Group>
+                  <Tab.List className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-1 rounded-xl bg-blue-50/80 p-1 mb-6">
+                    {sortedAreas.map(([area, tasks]) => {
+                      const priority = getPriorityBadge(tasks[0].score);
+                      return (
+                        <Tab
+                          key={area}
+                          className={({ selected }) => `
+                            w-full rounded-lg py-2.5 text-sm font-medium leading-5
+                            ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2
+                            ${selected
+                              ? 'bg-white shadow text-blue-700'
+                              : 'text-gray-700 hover:bg-white/[0.12] hover:text-blue-600'
+                            }
+                          `}
+                        >
+                          <div className="flex flex-col items-center space-y-1">
+                            <span className="font-medium">{area}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${priority.bg} ${priority.textColor}`}>
+                              {priority.text}
+                            </span>
+                          </div>
+                        </Tab>
+                      );
+                    })}
+                  </Tab.List>
+
+                  <Tab.Panels>
+                    {sortedAreas.map(([area, tasks]) => (
+                      <Tab.Panel key={area} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Coluna de Tarefas */}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between px-4 py-2">
+                            <div className="flex items-center gap-2">
+                              <ClipboardDocumentListIcon className="w-5 h-5 text-blue-600" />
+                              <span className="text-base font-medium text-gray-900">Lista de Tarefas</span>
+                            </div>
+                            <span className={classNames(
+                              'px-2 py-1 text-xs font-medium rounded-full',
+                              tasks[0].score === 'Precisa Melhorar'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-yellow-50 text-yellow-700'
+                            )}>
+                              {tasks.filter(t => !taskProgress[t.id]?.completed).length} pendentes
+                            </span>
+                          </div>
+                          
+                          {tasks.map((task: TaskRecommendation, index: number) => {
+                            const progress = taskProgress[task.id] || { completed: false, points: 0 };
+                            
+                            return (
+                              <motion.div
+                                key={task.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                                className={`group relative bg-white rounded-2xl border ${
+                                  progress.completed 
+                                    ? 'border-green-200 shadow-lg shadow-green-100' 
+                                    : 'border-gray-100 shadow-sm hover:shadow-md'
+                                } transition-all duration-300 p-6`}
+                              >
+                                {/* Badge de Status */}
+                                <div className="absolute -top-2 -right-2">
+                                  {progress.completed ? (
+                                    <div className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
+                                      <CheckCircleIcon className="w-4 h-4" />
+                                      <span>Concluída</span>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                      Pendente
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-start space-x-4">
+                                  <div className="flex-shrink-0">
+                                    <div 
+                                      className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                        progress.completed 
+                                          ? 'bg-green-50 text-green-600' 
+                                          : 'bg-blue-50 text-blue-600'
+                                      }`}
+                                    >
+                                      <RocketLaunchIcon className="w-6 h-6" />
+                                    </div>
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between">
+                                      <h5 className={`text-base font-semibold ${
+                                        progress.completed ? 'text-green-700' : 'text-gray-900'
+                                      } group-hover:text-blue-600 transition-colors duration-200`}>
+                                        {task.tarefa_recomendada}
+                                      </h5>
+                                    </div>
+
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                        {task.framework_sugerido}
+                                      </span>
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+                                        {task.area}
+                                      </span>
+                                    </div>
+
+                                    {/* Barra de Progresso */}
+                                    {progress.completed && (
+                                      <div className="mt-3">
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                          <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '100%' }}
+                                            transition={{ duration: 0.5 }}
+                                            className="bg-green-500 h-1.5 rounded-full"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="flex-shrink-0">
+                                    <button
+                                      onClick={() => handleTaskComplete(task.id)}
+                                      className={`relative inline-flex items-center justify-center p-4 rounded-xl transition-all duration-200 ${
+                                        progress.completed
+                                          ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                                          : 'bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600'
+                                      }`}
+                                    >
+                                      <motion.div
+                                        animate={progress.completed ? { scale: [1, 1.2, 1] } : {}}
+                                        transition={{ duration: 0.3 }}
+                                      >
+                                        {progress.completed ? (
+                                          <CheckCircleIcon className="w-6 h-6" />
+                                        ) : (
+                                          <input
+                                            type="checkbox"
+                                            className="h-6 w-6 rounded-lg border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                            checked={progress.completed}
+                                            onChange={() => handleTaskComplete(task.id)}
+                                          />
+                                        )}
+                                      </motion.div>
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Coluna de Material de Apoio */}
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <div className="flex items-center space-x-3 mb-6">
+                            <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+                            <h4 className="text-lg font-semibold text-gray-900">Material de Apoio</h4>
+                          </div>
+                          
+                          {tasks.length > 0 && (
+                            <div className="bg-white rounded-lg p-6 shadow-sm">
+                              <h5 className="font-medium text-gray-900 mb-2">
+                                {tasks[0].nome_material}
+                              </h5>
+                              <p className="text-sm text-gray-500 mb-4">
+                                Material específico para clientes {tasks[0].tipo_cliente}
+                              </p>
+                              
+                              <a
+                                href={tasks[0].link_pdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800 group"
+                              >
+                                <span>Acessar material completo</span>
+                                <ArrowTopRightOnSquareIcon className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                              </a>
+
+                              <div className="mt-4 pt-4 border-t border-gray-100">
+                                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                  <InformationCircleIcon className="w-5 h-5" />
+                                  <span>Este material é válido para todas as {tasks.length} tarefas desta área</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Tab.Panel>
+                    ))}
+                  </Tab.Panels>
+                </Tab.Group>
+              )}
+            </div>
           </div>
         );
       default:
         return null;
     }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 7) return 'text-green-600';
+    if (score >= 5) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBackground = (score: number) => {
+    if (score >= 7) return 'bg-green-50';
+    if (score >= 5) return 'bg-yellow-50';
+    return 'bg-red-50';
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 7) return 'Excelente';
+    if (score >= 5) return 'Bom';
+    return 'Precisa Melhorar';
+  };
+
+  const getRecommendation = (area: string, score: number) => {
+    if (score < 7) {
+      switch (area) {
+        case "Geração de Leads":
+          return "Implemente estratégias básicas de captação de leads e comece a construir sua base de dados.";
+        case "Conversão":
+          return "Analise seus pontos de contato e identifique onde estão as principais perdas de conversão.";
+        case "Canais de Aquisição":
+          return "Diversifique seus canais de marketing e comece testando novas plataformas.";
+        case "Conteúdo":
+          return "Desenvolva um calendário editorial básico e comece a produzir conteúdo regularmente.";
+        case "CRM e Relacionamento":
+          return "Implemente um sistema básico de CRM para começar a organizar seus contatos.";
+        case "Análise de Dados":
+          return "Comece a coletar e analisar dados básicos de performance.";
+        case "Presença Digital":
+          return "Fortaleça sua presença nas principais redes sociais e mantenha consistência.";
+        case "Automações":
+          return "Identifique processos repetitivos que podem ser automatizados.";
+        default:
+          return "Desenvolva uma estratégia básica para esta área.";
+      }
+    }
+    return "";
   };
 
   return (
@@ -1337,7 +2250,7 @@ export default function ReportPage() {
                   <span className="relative">
                     Upgrade
                     <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
-          </span>
+                  </span>
                 </div>
                 <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
               </motion.button>
@@ -1347,7 +2260,7 @@ export default function ReportPage() {
       </header>
 
       <main className="flex-1 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div id="report-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
           {/* Score Geral Card - Layout responsivo */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 relative overflow-hidden mb-6 sm:mb-8">
             <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-gray-500/5 to-gray-500/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
@@ -1429,12 +2342,118 @@ export default function ReportPage() {
                 transition={{ duration: 0.5 }}
                 className="space-y-6 sm:space-y-8"
               >
-                <Tab.Panel>
-                  {renderTabContent()}
-                </Tab.Panel>
+                {tabs.map((tab) => (
+                  <Tab.Panel key={tab.id}>
+                    {renderTabContent(tab.id)}
+                  </Tab.Panel>
+                ))}
               </motion.div>
             </Tab.Panels>
           </Tab.Group>
+
+          {/* Card de Impressão do Relatório */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-8 bg-white rounded-2xl shadow-lg overflow-hidden print:hidden"
+          >
+            <div className="p-8">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-3 rounded-xl bg-blue-50">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="w-6 h-6 text-blue-600" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" 
+              />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">Download do Relatório</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <p className="text-gray-600">
+                      Imprima seu relatório completo ou salve como PDF para compartilhar com sua equipe.
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span className="text-sm text-gray-600">Layout otimizado para impressão</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-sm text-gray-600">Opção de salvar como PDF</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                        <span className="text-sm text-gray-600">Visualização prévia</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full md:w-auto">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handlePrint}
+                    className="w-full md:w-auto group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center gap-3">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="w-6 h-6 transform group-hover:translate-y-1 transition-transform duration-300" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
+                      Download do Relatório
+                      <span className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
+                    </div>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-8 py-4 bg-gray-50 border-t border-gray-100">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  />
+                </svg>
+                Use a opção "Salvar como PDF" na janela de impressão para gerar um arquivo PDF
+              </div>
+            </div>
+          </motion.div>
         </div>
       </main>
 
@@ -1442,6 +2461,146 @@ export default function ReportPage() {
         isOpen={isAgendaModalOpen} 
         onClose={() => setIsAgendaModalOpen(false)} 
       />
+
+      {/* Efeito de Fogos de Artifício */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          {Array.from({ length: 100 }).map((_, i) => {
+            const hue = Math.random() * 360;
+            const angle = (Math.random() * Math.PI * 2);
+            const velocity = 20 + Math.random() * 15;
+            const size = Math.random() * 6 + 2;
+            
+            return (
+              <motion.div
+                key={i}
+                initial={{
+                  x: window.innerWidth / 2,
+                  y: window.innerHeight / 2,
+                  opacity: 1,
+                  scale: 0
+                }}
+                animate={{
+                  x: [
+                    window.innerWidth / 2,
+                    window.innerWidth / 2 + Math.cos(angle) * velocity * 20
+                  ],
+                  y: [
+                    window.innerHeight / 2,
+                    window.innerHeight / 2 + Math.sin(angle) * velocity * 20 + (velocity * 15)
+                  ],
+                  opacity: [1, 1, 0],
+                  scale: [0, 1, 0.5]
+                }}
+                transition={{
+                  duration: 0.6,
+                  ease: [0.2, 0.8, 0.4, 1],
+                  delay: Math.random() * 0.2
+                }}
+                style={{
+                  position: 'absolute',
+                  width: size + 'px',
+                  height: size + 'px',
+                  background: `hsl(${hue}, 100%, 65%)`,
+                  boxShadow: `0 0 ${size * 2}px hsl(${hue}, 100%, 65%)`,
+                  borderRadius: '50%',
+                  zIndex: 9999
+                }}
+              />
+            );
+          })}
+
+          {/* Explosões centrais */}
+          {[...Array(5)].map((_, index) => (
+            <motion.div
+              key={`burst-${index}`}
+              initial={{ 
+                scale: 0,
+                opacity: 1,
+                x: window.innerWidth / 2 + (Math.random() - 0.5) * 100,
+                y: window.innerHeight / 2 + (Math.random() - 0.5) * 100
+              }}
+              animate={{
+                scale: [0, 3],
+                opacity: [1, 0]
+              }}
+              transition={{
+                duration: 0.3,
+                delay: index * 0.1
+              }}
+              style={{
+                position: 'absolute',
+                width: '40px',
+                height: '40px',
+                background: `radial-gradient(circle, hsl(${Math.random() * 360}, 100%, 75%) 0%, transparent 70%)`,
+                borderRadius: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}
+            />
+          ))}
+
+          {/* Rastros luminosos */}
+          {[...Array(12)].map((_, index) => {
+            const angle = (index / 12) * Math.PI * 2;
+            const hue = Math.random() * 360;
+            
+            return (
+              <motion.div
+                key={`trail-${index}`}
+                initial={{
+                  x: window.innerWidth / 2,
+                  y: window.innerHeight / 2,
+                  scale: 0,
+                  opacity: 1
+                }}
+                animate={{
+                  x: window.innerWidth / 2 + Math.cos(angle) * 150,
+                  y: window.innerHeight / 2 + Math.sin(angle) * 150,
+                  scale: [0, 1, 0],
+                  opacity: [1, 0.8, 0]
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: "easeOut",
+                  delay: Math.random() * 0.2
+                }}
+                style={{
+                  position: 'absolute',
+                  width: '3px',
+                  height: '25px',
+                  background: `linear-gradient(to top, transparent, hsl(${hue}, 100%, 70%))`,
+                  transform: `rotate(${angle}rad)`,
+                  transformOrigin: 'center'
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TaskList({ tasks }) {
+  if (!tasks?.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Nenhuma tarefa disponível</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {tasks.map((task, index) => (
+        <div
+          key={index}
+          className="p-6 rounded-lg border border-gray-200 bg-white"
+        >
+          <h3 className="text-lg font-medium text-gray-900">{task.title}</h3>
+          <p className="mt-2 text-gray-600">{task.description}</p>
+        </div>
+      ))}
     </div>
   );
 }

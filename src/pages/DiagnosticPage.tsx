@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DiagnosticPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { 
@@ -19,6 +19,26 @@ export default function DiagnosticPage() {
     previousQuestion,
     submitDiagnostic
   } = useDiagnostic();
+
+  // Verificação imediata de autenticação
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    navigate('/');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-gray-600">Redirecionando...</p>
+        </div>
+      </div>
+    );
+  }
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
@@ -123,41 +143,41 @@ export default function DiagnosticPage() {
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100/30 py-6 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100/30 py-4 sm:py-6 px-3 sm:px-4 relative overflow-hidden">
       {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full transform translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-56 h-56 bg-gradient-to-tr from-indigo-200/20 to-transparent rounded-full transform -translate-x-1/2 translate-y-1/2 blur-3xl"></div>
+      <div className="absolute top-0 right-0 w-48 sm:w-72 h-48 sm:h-72 bg-gradient-to-br from-blue-200/20 to-transparent rounded-full transform translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
+      <div className="absolute bottom-0 left-0 w-36 sm:w-56 h-36 sm:h-56 bg-gradient-to-tr from-indigo-200/20 to-transparent rounded-full transform -translate-x-1/2 translate-y-1/2 blur-3xl"></div>
 
       <div className="max-w-2xl mx-auto relative">
-        {/* Header - mais clean */}
+        {/* Header - mais clean e responsivo */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-6 sm:mb-8 px-2"
         >
-          <h1 className="text-3xl font-bold text-[#007BFF] mb-2 tracking-tight">Futuree AI</h1>
-          <h2 className="text-xl font-semibold text-gray-800 mb-3">Diagnóstico de Marketing Digital</h2>
-          <p className="text-gray-600 text-base mx-auto leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#007BFF] mb-2 tracking-tight">Futuree AI</h1>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3">Diagnóstico de Marketing Digital</h2>
+          <p className="text-sm sm:text-base text-gray-600 mx-auto leading-relaxed">
             Responda as perguntas para receber um diagnóstico personalizado do seu marketing digital.
           </p>
         </motion.div>
 
-        {/* Progress Section com gamificação */}
+        {/* Progress Section com gamificação - ajustado para mobile */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-6"
+          className="mb-4 sm:mb-6 px-2"
         >
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center space-x-2">
               <motion.span 
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold"
+                className="flex items-center justify-center w-6 sm:w-8 h-6 sm:h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm sm:text-base"
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 0.3 }}
               >
                 {currentQuestionIndex + 1}
               </motion.span>
-              <span className="text-sm font-medium text-gray-600">
+              <span className="text-xs sm:text-sm font-medium text-gray-600">
                 de {totalQuestions} questões
               </span>
             </div>
@@ -166,13 +186,13 @@ export default function DiagnosticPage() {
               animate={{ scale: selectedOption ? [1, 1.1, 1] : 1 }}
               transition={{ duration: 0.3 }}
             >
-              <SparklesIcon className="w-4 h-4 text-yellow-400 mr-1" />
-              <span className="text-sm font-medium bg-blue-50 px-3 py-1 rounded-full text-[#007BFF] border border-blue-100">
+              <SparklesIcon className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400 mr-1" />
+              <span className="text-xs sm:text-sm font-medium bg-blue-50 px-2 sm:px-3 py-1 rounded-full text-[#007BFF] border border-blue-100">
                 {Math.round(progress)}% completo
               </span>
             </motion.div>
           </div>
-          <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="relative h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
@@ -182,7 +202,7 @@ export default function DiagnosticPage() {
           </div>
         </motion.div>
 
-        {/* Question Card com feedback de gamificação */}
+        {/* Question Card com feedback de gamificação - ajustado para mobile */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
@@ -190,146 +210,71 @@ export default function DiagnosticPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
-            className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white p-6 mb-6"
+            className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white p-4 sm:p-6 mb-4 sm:mb-6 mx-2"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
               {currentQuestion.text}
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {currentQuestion.options.map((option) => (
                 <motion.button
                   key={option.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3 }}
-                  whileHover={{ scale: 1.01, translateX: 4 }}
+                  onClick={() => handleAnswerAndNavigation(currentQuestion.id, option.id)}
+                  className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all duration-200 ${
+                    selectedOption === option.id
+                      ? 'bg-blue-50 border-blue-200 shadow-sm'
+                      : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/50'
+                  }`}
+                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  onClick={() => {
-                    handleAnswerAndNavigation(currentQuestion.id, option.id);
-                    // Adiciona animação de conquista
-                    if (!selectedOption) {
-                      const confetti = document.createElement('div');
-                      confetti.className = 'fixed top-0 left-0 w-full h-full pointer-events-none z-50';
-                      document.body.appendChild(confetti);
-                      setTimeout(() => document.body.removeChild(confetti), 2000);
-                    }
-                  }}
-                  className={`w-full text-left p-4 rounded-lg transition-all duration-300 group relative
-                    ${selectedOption === option.id
-                      ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 border-2 border-[#007BFF] shadow-md'
-                      : 'bg-white/80 border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50/50'
-                    }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center flex-1">
-                      <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center transition-all duration-300
-                        ${selectedOption === option.id
-                          ? 'border-[#007BFF] bg-[#007BFF] scale-110'
-                          : 'border-gray-300 group-hover:border-blue-300'
-                        }`}
-                      >
-                        {selectedOption === option.id && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="w-2 h-2 rounded-full bg-white"
-                          />
-                        )}
-                      </div>
-                      <p className={`text-gray-700 font-medium text-base transition-all duration-200
-                        ${selectedOption === option.id ? 'text-blue-700 scale-[1.01]' : ''}`}
-                      >
-                        {option.text}
-                      </p>
-                    </div>
-                    {selectedOption === option.id && (
-                      <motion.div
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="flex items-center space-x-1"
-                      >
-                        <SparklesIcon className="w-4 h-4 text-yellow-400" />
-                        <ArrowRightIcon className="h-4 w-4 text-[#007BFF]" />
-                      </motion.div>
-                    )}
-                  </div>
+                  <span className="text-sm sm:text-base text-gray-700">{option.text}</span>
                 </motion.button>
               ))}
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation com feedback visual */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center px-4 py-3 bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-white"
-        >
+        {/* Navigation Buttons - ajustados para mobile */}
+        <div className="flex justify-between items-center px-2">
           <button
             onClick={previousQuestion}
             disabled={currentQuestionIndex === 0}
-            className={`flex items-center px-3 py-2 rounded-lg transition-all duration-300
-              ${currentQuestionIndex === 0
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-600 hover:text-[#007BFF] hover:bg-blue-50 hover:scale-105'
-              }`}
+            className={`flex items-center space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-medium transition-all duration-200 ${
+              currentQuestionIndex === 0
+                ? 'opacity-50 cursor-not-allowed text-gray-400'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <ArrowLeftIcon className="h-4 w-4 mr-1.5" />
-            Anterior
+            <ArrowLeftIcon className="w-4 sm:w-5 h-4 sm:h-5" />
+            <span>Anterior</span>
           </button>
 
-          <AnimatePresence>
-            {selectedOption ? (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center space-x-2"
-              >
-                <SparklesIcon className="w-4 h-4 text-yellow-400" />
-                <span className="text-xs font-medium text-green-600">Ótima escolha!</span>
-              </motion.div>
-            ) : (
-              <motion.span 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-xs font-medium text-gray-500"
-              >
-                Selecione uma opção
-              </motion.span>
-            )}
-          </AnimatePresence>
-
-          {currentQuestionIndex < totalQuestions - 1 && selectedOption && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAnswerAndNavigation(currentQuestion.id, selectedOption)}
-              className="flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-xl"
-            >
-              {currentQuestionIndex === totalQuestions - 2 ? 'Finalizar' : 'Próxima'}
-              <ArrowRightIcon className="h-4 w-4 ml-1.5" />
-            </motion.button>
-          )}
-
-          {/* Se for a última questão, mostra o botão de ver relatório */}
-          {currentQuestionIndex === totalQuestions - 1 && selectedOption && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          {currentQuestionIndex === totalQuestions - 1 ? (
+            <button
               onClick={handleSubmitDiagnostic}
-              className="flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-xl"
+              disabled={!selectedOption}
+              className={`flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm sm:text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 ${
+                !selectedOption ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-600 hover:to-blue-700'
+              }`}
             >
-              Ver Relatório
-              <SparklesIcon className="h-4 w-4 ml-1.5" />
-            </motion.button>
+              <span>Finalizar</span>
+              <CheckCircleIcon className="w-4 sm:w-5 h-4 sm:h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => nextQuestion()}
+              disabled={!selectedOption}
+              className={`flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm sm:text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 ${
+                !selectedOption ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-600 hover:to-blue-700'
+              }`}
+            >
+              <span>Próxima</span>
+              <ArrowRightIcon className="w-4 sm:w-5 h-4 sm:h-5" />
+            </button>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

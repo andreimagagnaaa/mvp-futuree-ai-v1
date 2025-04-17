@@ -84,7 +84,7 @@ export default function DashboardPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {/* Implementar integração com Stripe */}}
+                  onClick={() => navigate('/dashboard-premium')}
                   className="relative inline-flex items-center px-8 py-4 text-base font-medium text-white bg-gradient-to-r from-[#40A9FF] via-[#1890FF] to-[#40A9FF] rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 group overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#69B9FF] via-[#40A9FF] to-[#69B9FF] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

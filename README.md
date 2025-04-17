@@ -1,92 +1,71 @@
+# Futuree AI
 
-# Futuree AI - Dashboard de Marketing
+Plataforma de diagnóstico e otimização de marketing digital com inteligência artificial.
 
-Este projeto é uma plataforma de dashboard para marketing digital que oferece ferramentas para análise, planejamento e execução de estratégias de marketing.
+## 🚀 Funcionalidades
 
-## Funcionalidades Principais
+- **Diagnóstico Inteligente**: Análise completa da sua estratégia de marketing digital
+- **Dashboard Personalizado**: Visualização clara dos seus resultados e métricas
+- **Recomendações Práticas**: Sugestões acionáveis baseadas em dados
+- **Agendamento de Demonstrações**: Sistema integrado com Google Calendar
+- **Relatórios Detalhados**: Exportação de relatórios em PDF
 
-### Dashboard de Métricas
-- Visualização de KPIs importantes (visitas, conversão, leads, receita)
-- Gráficos de tendência para acompanhamento de métricas
-- Análise de desempenho por canal
-- Filtros por período (dia, semana, mês, ano)
-
-### Plano de Ação
-- Gerenciamento de tarefas por etapas (Diagnóstico, Estratégia, Execução, Análise)
-- Acompanhamento visual de progresso
-- Priorização de tarefas
-- Notas e prazos para cada tarefa
-
-### Checklist de Tarefas
-- Criação e gerenciamento de tarefas
-- Marcação de conclusão com feedback visual
-- Categorização e priorização
-- Exportação para PDF
-
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias
 
 - React
 - TypeScript
 - Tailwind CSS
-- Framer Motion (animações)
-- Lucide React (ícones)
-- Canvas Confetti (efeitos visuais)
+- Supabase
+- Firebase
+- Framer Motion
+- Headless UI
+- Recharts
+- Lucide Icons
 
-## Estrutura do Projeto
-
-```
-Landing Pagee/
-├── src/
-│   ├── components/
-│   │   ├── dashboard/
-│   │   │   ├── ActionPlanDashboard.tsx
-│   │   │   ├── MetricsDashboard.tsx
-│   │   │   ├── TaskChecklist.tsx
-│   │   │   └── PremiumReport.tsx
-│   │   └── ...
-│   ├── pages/
-│   │   ├── DashboardPage.tsx
-│   │   └── ...
-│   ├── contexts/
-│   ├── hooks/
-│   └── ...
-├── public/
-└── ...
-```
-
-## Instalação e Execução
+## 📦 Instalação
 
 1. Clone o repositório
-2. Instale as dependências:
-   ```
-   npm install
-   ```
-3. Execute o servidor de desenvolvimento:
-   ```
-   npm run dev
-   ```
-4. Acesse a aplicação em `http://localhost:5173`
+```bash
+git clone https://github.com/seu-usuario/futuree-ai.git
+```
 
-## Componentes Principais
+2. Instale as dependências
+```bash
+cd futuree-ai
+npm install
+```
 
-### MetricsDashboard
-Dashboard de métricas chave com indicadores de tendência, gráficos e análise de desempenho por canal.
+3. Configure as variáveis de ambiente
+```bash
+cp .env.example .env
+```
+Preencha as variáveis no arquivo `.env` com suas credenciais.
 
-### ActionPlanDashboard
-Plano de ação interativo com cartões de progresso visual para cada etapa do processo de marketing.
+4. Inicie o servidor de desenvolvimento
+```bash
+npm run dev
+```
 
-### TaskChecklist
-Sistema de checklist para gerenciamento de tarefas com feedback visual e categorização.
+## 🗄️ Estrutura do Banco de Dados
 
-## Contribuição
+### Tabela: agendamentos
+- `id`: UUID (primary key)
+- `nome`: text
+- `email`: text
+- `empresa`: text
+- `telefone`: text
+- `status`: text (default: 'pendente')
+- `created_at`: timestamp
+- `updated_at`: timestamp
+- `horario_agendado`: timestamp
+- `observacoes`: text
 
-Para contribuir com o projeto, siga estas etapas:
-1. Faça um fork do repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Faça commit das suas alterações (`git commit -m 'Adiciona nova feature'`)
-4. Faça push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
+## 🔐 Segurança
 
-## Licença
+- Row Level Security (RLS) configurado no Supabase
+- Autenticação via Firebase
+- Proteção de rotas para usuários autenticados
 
-Este projeto está licenciado sob a licença MIT. 
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes. 

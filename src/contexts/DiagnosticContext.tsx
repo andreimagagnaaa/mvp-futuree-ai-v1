@@ -27,7 +27,7 @@ interface QuestionOption {
 interface Question {
   id: string;
   area: string;
-  text: string;
+    text: string;
   options: QuestionOption[];
 }
 
@@ -38,6 +38,7 @@ interface DiagnosticData {
   recommendations: string[];
   insights: string[];
   previousScore?: number | null;
+  history: { date: Date; totalScore: number; scores: { [key: string]: number } }[];
 }
 
 interface Answer {
@@ -172,9 +173,9 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const startDiagnostic = async () => {
     try {
       setIsLoading(true);
-      setCurrentQuestionIndex(0);
+    setCurrentQuestionIndex(0);
       setAnswers({});
-      setSelectedOption(null);
+    setSelectedOption(null);
       setCurrentQuestion(questions[0]);
       setIsInitialized(true);
       console.log('Diagnóstico iniciado');
@@ -292,7 +293,7 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       businessType,
       recommendations,
       insights,
-      previousScore: null
+      history: []
     };
   };
 
@@ -409,13 +410,21 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (currentUser) {
         const userRef = doc(db, 'users', currentUser.uid);
         
-        // Busca o diagnóstico anterior para usar como previousScore
+        // Busca o diagnóstico anterior e histórico
         const userDoc = await getDoc(userRef);
         const userData = userDoc.data();
-        const previousScore = userData?.diagnostic?.report?.totalScore || null;
+        const previousScore = userData?.diagnostic?.totalScore || null;
+        const previousHistory = userData?.diagnostic?.history || [];
+        
+        // Prepara o novo registro histórico
+        const newHistoryEntry = {
+          date: new Date(),
+          totalScore: reportWithoutPrevious.totalScore,
+          scores: reportWithoutPrevious.scores
+        };
         
         // Prepara os dados para salvar
-        const diagnosticData = {
+      const diagnosticData = {
           completedAt: new Date(),
           answers,
           scores: reportWithoutPrevious.scores,
@@ -423,7 +432,8 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           recommendations: reportWithoutPrevious.recommendations,
           insights: reportWithoutPrevious.insights,
           previousScore,
-          businessType: reportWithoutPrevious.businessType
+          businessType: reportWithoutPrevious.businessType,
+          history: [...previousHistory, newHistoryEntry]
         };
 
         await updateDoc(userRef, {
@@ -467,4 +477,4 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       {children}
     </DiagnosticContext.Provider>
   );
-}; 
+};

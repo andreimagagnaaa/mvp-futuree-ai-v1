@@ -4,6 +4,7 @@ import App from './App';
 import DiagnosticPage from './pages/DiagnosticPage';
 import ReportPage from './pages/ReportPage';
 import DashboardPage from './pages/DashboardPage';
+import DashboardPremium from './pages/DashboardPremium';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { DiagnosticProvider } from './contexts/DiagnosticContext';
@@ -53,6 +54,18 @@ const routes: RouteObject[] = [
         <DiagnosticProvider>
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        </DiagnosticProvider>
+      </AuthProvider>
+    )
+  },
+  {
+    path: "/dashboard-premium",
+    element: (
+      <AuthProvider>
+        <DiagnosticProvider>
+          <ProtectedRoute>
+            <DashboardPremium />
           </ProtectedRoute>
         </DiagnosticProvider>
       </AuthProvider>

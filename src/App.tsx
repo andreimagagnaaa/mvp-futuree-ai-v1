@@ -36,6 +36,9 @@ import { useAuth } from './contexts/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { AgendaModal } from './components/AgendaModal';
 import { buscarTarefasDeTeste } from './utils/supabaseTest';
+import DashboardPage from './pages/DashboardPage';
+import DiagnosticPage from './pages/DiagnosticPage';
+import DashboardPremium from './pages/DashboardPremium';
 
 const testimonials = [
   {
@@ -117,22 +120,22 @@ const PopupCTA = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative w-full max-w-sm bg-gradient-to-br from-white to-[#F8FAFC] rounded-2xl shadow-2xl overflow-hidden mx-4"
+        className="relative w-full max-w-[90%] sm:max-w-sm bg-gradient-to-br from-white to-[#F8FAFC] rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Fundo decorativo */}
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#40A9FF] via-[#1890FF] to-[#40A9FF]"></div>
         
         {/* Elementos decorativos */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-[#0078FF] rounded-full blur-2xl opacity-10"></div>
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#20B0FF] rounded-full blur-2xl opacity-10"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#4A9FF5] rounded-full blur-2xl opacity-5"></div>
+        <div className="absolute top-0 left-0 w-24 sm:w-32 h-24 sm:h-32 bg-[#0078FF] rounded-full blur-2xl opacity-10"></div>
+        <div className="absolute bottom-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-[#20B0FF] rounded-full blur-2xl opacity-10"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 sm:w-48 h-32 sm:h-48 bg-[#4A9FF5] rounded-full blur-2xl opacity-5"></div>
 
         {/* Botão de fechar */}
         <button
@@ -141,65 +144,65 @@ const PopupCTA = ({
             e.stopPropagation();
             onClose();
           }}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white z-50"
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-400 hover:text-gray-600 transition-colors bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white z-50"
         >
           <X className="h-4 w-4" />
         </button>
 
         {/* Conteúdo */}
-        <div className="p-6 relative">
-          <div className="text-center mb-6">
-            <span className="inline-block px-3 py-1 bg-[#007BFF]/10 text-[#007BFF] rounded-full text-xs font-medium mb-3">
+        <div className="p-4 sm:p-6 relative">
+          <div className="text-center mb-4 sm:mb-6">
+            <span className="inline-block px-3 py-1 bg-[#007BFF]/10 text-[#007BFF] rounded-full text-xs font-medium mb-2 sm:mb-3">
               Oferta Especial
             </span>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">
               Potencialize seu Marketing Digital
             </h3>
-            <p className="text-sm text-gray-600">Descubra como podemos transformar sua estratégia digital</p>
+            <p className="text-xs sm:text-sm text-gray-600">Descubra como podemos transformar sua estratégia digital</p>
           </div>
 
-          <div className="space-y-3 mb-6">
+          <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
             {/* Benefício 1 */}
-            <div className="flex items-start space-x-3 bg-white/50 p-3 rounded-lg backdrop-blur-sm border border-gray-100">
+            <div className="flex items-start space-x-2 sm:space-x-3 bg-white/50 p-2 sm:p-3 rounded-lg backdrop-blur-sm border border-gray-100">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0078FF] to-[#40A9FF] flex items-center justify-center shadow-lg">
-                  <Brain className="h-5 w-5 text-white" />
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gradient-to-br from-[#0078FF] to-[#40A9FF] flex items-center justify-center shadow-lg">
+                  <Brain className="h-4 sm:h-5 w-4 sm:w-5 text-white" />
                 </div>
               </div>
               <div>
-                <h4 className="font-bold text-gray-900 text-sm">Análise Inteligente</h4>
-                <p className="text-xs text-gray-600">Processamento de dados em tempo real</p>
+                <h4 className="font-bold text-gray-900 text-xs sm:text-sm">Análise Inteligente</h4>
+                <p className="text-[10px] sm:text-xs text-gray-600">Processamento de dados em tempo real</p>
               </div>
             </div>
 
             {/* Benefício 2 */}
-            <div className="flex items-start space-x-3 bg-white/50 p-3 rounded-lg backdrop-blur-sm border border-gray-100">
+            <div className="flex items-start space-x-2 sm:space-x-3 bg-white/50 p-2 sm:p-3 rounded-lg backdrop-blur-sm border border-gray-100">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#20B0FF] to-[#69B9FF] flex items-center justify-center shadow-lg">
-                  <Target className="h-5 w-5 text-white" />
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gradient-to-br from-[#20B0FF] to-[#69B9FF] flex items-center justify-center shadow-lg">
+                  <Target className="h-4 sm:h-5 w-4 sm:w-5 text-white" />
                 </div>
               </div>
               <div>
-                <h4 className="font-bold text-gray-900 text-sm">Estratégias Personalizadas</h4>
-                <p className="text-xs text-gray-600">Planejamento adaptado ao seu negócio</p>
+                <h4 className="font-bold text-gray-900 text-xs sm:text-sm">Estratégias Personalizadas</h4>
+                <p className="text-[10px] sm:text-xs text-gray-600">Planejamento adaptado ao seu negócio</p>
               </div>
             </div>
 
             {/* Benefício 3 */}
-            <div className="flex items-start space-x-3 bg-white/50 p-3 rounded-lg backdrop-blur-sm border border-gray-100">
+            <div className="flex items-start space-x-2 sm:space-x-3 bg-white/50 p-2 sm:p-3 rounded-lg backdrop-blur-sm border border-gray-100">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4A9FF5] to-[#91C5FF] flex items-center justify-center shadow-lg">
-                  <TrendingUp className="h-5 w-5 text-white" />
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gradient-to-br from-[#4A9FF5] to-[#91C5FF] flex items-center justify-center shadow-lg">
+                  <TrendingUp className="h-4 sm:h-5 w-4 sm:w-5 text-white" />
                 </div>
               </div>
               <div>
-                <h4 className="font-bold text-gray-900 text-sm">Resultados Comprovados</h4>
-                <p className="text-xs text-gray-600">Aumento consistente de conversões</p>
+                <h4 className="font-bold text-gray-900 text-xs sm:text-sm">Resultados Comprovados</h4>
+                <p className="text-[10px] sm:text-xs text-gray-600">Aumento consistente de conversões</p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -208,16 +211,17 @@ const PopupCTA = ({
                 setIsAuthModalOpen(true);
                 onClose();
               }}
-              className="btn-primary w-full py-2.5 px-4 bg-[#007BFF] text-white hover:bg-[#0056b3] transition-all duration-300 shadow-lg hover:shadow-xl text-sm font-medium rounded-lg"
+              className="w-full py-2 sm:py-2.5 px-4 bg-[#007BFF] text-white hover:bg-[#0056b3] transition-all duration-300 shadow-lg hover:shadow-xl text-xs sm:text-sm font-medium rounded-lg flex items-center justify-center space-x-2"
             >
-              Começar Agora
+              <span>Começar Agora</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-[10px] sm:text-xs text-gray-500 text-center">
               Consulta gratuita de 30 minutos
             </p>
             <button
               onClick={onClose}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors w-full"
+              className="text-[10px] sm:text-xs text-gray-400 hover:text-gray-600 transition-colors w-full"
             >
               Não mostrar novamente
             </button>
