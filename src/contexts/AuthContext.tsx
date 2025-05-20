@@ -22,6 +22,8 @@ interface UserData {
   diagnostic: any;
   lastLogin?: any;
   updatedAt?: any;
+  role?: string;
+  bio?: string;
 }
 
 interface AuthContextType {
@@ -53,14 +55,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função para validar dados do usuário
   const validateUserData = (data: any): data is UserData => {
-    return (
-      data &&
-      typeof data.email === 'string' &&
-      typeof data.name === 'string' &&
-      typeof data.companyName === 'string' &&
-      typeof data.phone === 'string' &&
-      typeof data.hasCompletedDiagnostic === 'boolean'
-    );
+    if (!data) return false;
+    
+    // Validação básica dos campos obrigatórios
+    if (!data.email || !data.name || !data.companyName || !data.phone) {
+      return false;
+    }
+
+    // Se o usuário completou o diagnóstico, valida os dados do diagnóstico
+    if (data.hasCompletedDiagnostic && data.diagnostic) {
+      // Garante que o totalScore existe e é um número
+      if (typeof data.diagnostic.totalScore !== 'number') {
+        return false;
+      }
+      
+      // Garante que os scores existem e são números
+      if (!data.diagnostic.scores || typeof data.diagnostic.scores !== 'object') {
+        return false;
+      }
+    }
+
+    return true;
   };
 
   // Função para verificar e redirecionar o usuário

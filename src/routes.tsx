@@ -5,14 +5,22 @@ import DiagnosticPage from './pages/DiagnosticPage';
 import ReportPage from './pages/ReportPage';
 import DashboardPage from './pages/DashboardPage';
 import DashboardPremium from './pages/DashboardPremium';
+import AIPage from './pages/ai';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PremiumRoute from './components/auth/PremiumRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { DiagnosticProvider } from './contexts/DiagnosticContext';
+import { MetricsProvider } from './contexts/MetricsContext';
+import { CustomMetricsProvider } from './contexts/CustomMetricsContext';
 
 const withProviders = (Component: React.ComponentType) => (
   <AuthProvider>
     <DiagnosticProvider>
-      {React.createElement(Component)}
+      <MetricsProvider>
+        <CustomMetricsProvider>
+          <Component />
+        </CustomMetricsProvider>
+      </MetricsProvider>
     </DiagnosticProvider>
   </AuthProvider>
 );
@@ -64,10 +72,28 @@ const routes: RouteObject[] = [
     element: (
       <AuthProvider>
         <DiagnosticProvider>
-          <ProtectedRoute>
-            <DashboardPremium />
-          </ProtectedRoute>
+          <MetricsProvider>
+            <CustomMetricsProvider>
+              <ProtectedRoute>
+                <PremiumRoute>
+                  <DashboardPremium />
+                </PremiumRoute>
+              </ProtectedRoute>
+            </CustomMetricsProvider>
+          </MetricsProvider>
         </DiagnosticProvider>
+      </AuthProvider>
+    )
+  },
+  {
+    path: "/ai",
+    element: (
+      <AuthProvider>
+        <ProtectedRoute>
+          <PremiumRoute>
+            <AIPage />
+          </PremiumRoute>
+        </ProtectedRoute>
       </AuthProvider>
     )
   }

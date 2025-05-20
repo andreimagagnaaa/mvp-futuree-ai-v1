@@ -1,0 +1,137 @@
+/* Variáveis de cores para métricas */
+:root {
+  --metric-primary: rgb(59, 130, 246);
+  --metric-success: rgb(34, 197, 94);
+  --metric-warning: rgb(234, 179, 8);
+  --metric-danger: rgb(239, 68, 68);
+  --metric-info: rgb(168, 85, 247);
+  
+  --metric-bg-light: rgb(249, 250, 251);
+  --metric-bg-dark: rgb(17, 24, 39);
+  
+  --metric-border-light: rgb(229, 231, 235);
+  --metric-border-dark: rgb(55, 65, 81);
+}
+
+/* Classes para cards de métricas */
+.metric-card {
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all duration-200;
+}
+
+.metric-card:hover {
+  @apply shadow-md;
+}
+
+/* Classes para valores de métricas */
+.metric-value {
+  @apply text-2xl font-bold text-gray-900 dark:text-white;
+}
+
+.metric-label {
+  @apply text-sm font-medium text-gray-500 dark:text-gray-400;
+}
+
+/* Classes para tendências */
+.trend-positive {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.trend-negative {
+  @apply text-red-600 dark:text-red-400;
+}
+
+/* Classes para badges */
+.metric-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.metric-badge-success {
+  @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300;
+}
+
+.metric-badge-warning {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300;
+}
+
+.metric-badge-danger {
+  @apply bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300;
+}
+
+/* Classes para gráficos */
+.chart-container {
+  @apply bg-white dark:bg-gray-800 rounded-xl p-6;
+}
+
+.chart-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mb-4;
+}
+
+/* Classes para tabelas */
+.metrics-table {
+  @apply min-w-full divide-y divide-gray-200 dark:divide-gray-700;
+}
+
+.metrics-table th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider;
+}
+
+.metrics-table td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400;
+}
+
+.metrics-table tr:hover {
+  @apply bg-gray-50 dark:bg-gray-800 transition-colors;
+}
+
+/* Classes para insights */
+.insight-card {
+  @apply flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg;
+}
+
+.insight-title {
+  @apply text-sm font-medium text-blue-900 dark:text-blue-300;
+}
+
+.insight-text {
+  @apply mt-1 text-sm text-blue-700 dark:text-blue-400;
+}
+
+/* Classes para botões de filtro */
+.filter-button {
+  @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors;
+}
+
+.filter-button-active {
+  @apply bg-blue-600 text-white shadow-sm;
+}
+
+.filter-button-inactive {
+  @apply bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600;
+}
+
+/* Classes para layout responsivo */
+.metrics-grid {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.metrics-grid-2 {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-8;
+}
+
+/* Classes para animações */
+.metric-fade-in {
+  @apply transition-opacity duration-200;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

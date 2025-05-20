@@ -266,19 +266,19 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       scores[question.area] = option.score;
     });
 
-    // Calcula o score total (soma simples dos scores)
+    // Calcula o score total
     let totalScore = 0;
-    let areasRespondidas = 0;
 
+    // Soma os scores de todas as áreas
+    // Se uma área não foi respondida, considera score 0
     areas.forEach(area => {
-      if (scores[area] !== undefined) {
-        totalScore += scores[area];
-        areasRespondidas++;
-      }
+      const areaScore = scores[area] || 0;
+      totalScore += areaScore;
+      console.log(`Área: ${area}, Score: ${areaScore}, Total acumulado: ${totalScore}`);
     });
 
-    // Ajusta o score total para a escala de 80 pontos
-    const finalTotalScore = areasRespondidas > 0 ? totalScore : 0;
+    // Garante que o score total não ultrapasse 80 (8 áreas × 10 pontos)
+    totalScore = Math.min(totalScore, 80);
 
     // Determina o tipo de negócio baseado nas respostas
     const businessType = determineBusinessType(answers);
@@ -289,7 +289,7 @@ export const DiagnosticProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     return {
       scores,
-      totalScore: finalTotalScore,
+      totalScore,
       businessType,
       recommendations,
       insights,

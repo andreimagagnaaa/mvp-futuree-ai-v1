@@ -33,7 +33,7 @@ export const areas = {
     icon: ChartBarIcon,
     description: "Força da marca no ambiente digital"
   },
-  "Automações": {
+  "Automação": {
     icon: ChartBarIcon,
     description: "Nível de automação dos processos"
   }

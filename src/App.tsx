@@ -39,6 +39,7 @@ import { buscarTarefasDeTeste } from './utils/supabaseTest';
 import DashboardPage from './pages/DashboardPage';
 import DiagnosticPage from './pages/DiagnosticPage';
 import DashboardPremium from './pages/DashboardPremium';
+import './styles/metrics.css';
 
 const testimonials = [
   {
@@ -120,7 +121,7 @@ const PopupCTA = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -295,7 +296,7 @@ function App() {
             <div className="flex items-center space-x-6">
               <button
                 onClick={() => handleAuthButtonClick('login')}
-                className="text-gray-800 hover:text-[#007BFF] transition-colors duration-300 text-sm font-medium px-4 py-2"
+                className="hidden sm:block text-gray-800 hover:text-[#007BFF] transition-colors duration-300 text-sm font-medium px-4 py-2"
               >
                 Login
               </button>
@@ -311,10 +312,10 @@ function App() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="section bg-gradient-to-b from-white to-[#F8FAFC] pt-28 pb-20 relative overflow-hidden">
+      <section id="hero" className="section bg-gradient-to-b from-white to-[#F8FAFC] pt-28 pb-20 relative overflow-x-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
         <div className="container-custom relative">
-          <div className="grid grid-cols-1 lg:grid-cols-6 gap-8 sm:gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 sm:gap-8 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -322,235 +323,101 @@ function App() {
               className="lg:col-span-3"
             >
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-                <div className="text-gray-900 whitespace-nowrap" style={{ lineHeight: '1.3' }}>Diagnóstico Inteligente de</div>
-                <div className="bg-gradient-to-r from-[#007BFF] via-[#40A9FF] to-[#1890FF] text-transparent bg-clip-text whitespace-nowrap" style={{ lineHeight: '1.3' }}>Marketing Digital</div>
+                <div className="text-gray-900" style={{ lineHeight: '1.3' }}>
+                  <span className="hidden sm:inline">Diagnóstico Inteligente de</span>
+                  <span className="sm:hidden">Diagnóstico Inteligente</span>
+                </div>
+                <div className="bg-gradient-to-r from-[#007BFF] via-[#40A9FF] to-[#1890FF] text-transparent bg-clip-text" style={{ lineHeight: '1.3' }}>
+                  <span className="hidden sm:inline">Marketing Digital</span>
+                  <span className="sm:hidden">Marketing Digital</span>
+                </div>
               </h1>
-              <p className="text-lg text-gray-700 mb-8 leading-relaxed max-w-2xl">
+              <p className="text-lg text-gray-700 mb-8 leading-relaxed max-w-2xl break-words">
                 Otimize sua estratégia de marketing com análises baseadas em IA. Obtenha insights personalizados e planos de ação práticos para impulsionar seus resultados.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <a 
                   href="#pricing" 
-                  className="btn-primary bg-gradient-to-r from-[#40A9FF] to-[#1890FF] text-white hover:from-[#69B9FF] hover:to-[#40A9FF] transition-all duration-300 px-6 py-3 rounded-xl flex items-center justify-center font-semibold shadow-lg hover:shadow-xl"
+                  className="btn-primary bg-gradient-to-r from-[#40A9FF] to-[#1890FF] text-white hover:from-[#69B9FF] hover:to-[#40A9FF] transition-all duration-300 px-4 sm:px-6 py-3 rounded-xl flex items-center justify-center font-semibold shadow-lg hover:shadow-xl text-sm sm:text-base"
                 >
-                  Faça seu diagnóstico gratuito
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <span className="break-normal">Faça seu diagnóstico gratuito</span>
+                  <ArrowRight className="ml-2 h-5 w-5 flex-shrink-0" />
                 </a>
                 <button
                   onClick={() => setIsAgendaModalOpen(true)}
-                  className="btn-secondary bg-white text-[#1890FF] border-2 border-[#1890FF] hover:bg-[#1890FF] hover:text-white transition-all duration-300 px-6 py-3 rounded-xl flex items-center justify-center font-semibold"
+                  className="btn-secondary bg-white text-[#1890FF] border-2 border-[#1890FF] hover:bg-[#1890FF] hover:text-white transition-all duration-300 px-4 sm:px-6 py-3 rounded-xl flex items-center justify-center font-semibold text-sm sm:text-base"
                 >
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Agendar demonstração
+                  <Calendar className="mr-2 h-5 w-5 flex-shrink-0" />
+                  <span className="break-normal">Agendar demonstração</span>
                 </button>
               </div>
-              <div className="flex items-center text-sm sm:text-base text-gray-800">
+              <div className="flex items-center text-sm sm:text-base text-gray-800 flex-wrap">
                 <CheckCircle2 className="h-5 w-5 mr-3 text-[#007BFF] flex-shrink-0" />
-                <span>Mais de 500 empresas já melhoraram seus resultados</span>
+                <span className="break-normal">Mais de 500 empresas já melhoraram seus resultados</span>
               </div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="lg:col-span-3 relative"
+              className="lg:col-span-3 relative w-full overflow-hidden"
             >
               <div className="relative z-10 rounded-xl sm:rounded-2xl overflow-hidden bg-white shadow-2xl border border-gray-100">
-                {/* Barra superior com gradiente */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#007BFF] via-[#40A9FF] to-[#007BFF]"></div>
-
-                <div className="aspect-video p-8">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#007BFF] via-[#40A9FF] to-[#007BFF]" />
+                <div className="p-4 sm:p-8">
                   <div className="flex flex-col h-full">
-                    {/* Header do Card */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-[#007BFF]/10 p-2.5 rounded-xl">
-                          <BarChart2 className="h-6 w-6 text-[#007BFF]" />
-                </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                      <div className="flex items-start space-x-3 sm:space-x-4">
+                        <div className="bg-[#007BFF]/10 p-2 sm:p-2.5 rounded-xl">
+                          <BarChart2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#007BFF]" />
+                        </div>
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Prévia do seu Diagnóstico</h3>
-                          <p className="text-sm text-gray-500 mt-1">Veja como está seu marketing digital</p>
-                </div>
-              </div>
+                          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Prévia do seu Diagnóstico</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 mt-1">Veja como está seu marketing digital</p>
+                        </div>
+                      </div>
                       <button 
                         onClick={() => {
                           setAuthModalView('signup');
                           setIsAuthModalOpen(true);
                         }}
-                        className="px-4 py-2 bg-[#007BFF] text-white rounded-lg text-sm font-semibold flex items-center hover:bg-[#0056b3] transition-colors duration-300 shadow-lg"
+                        className="w-full sm:w-auto px-4 py-2 bg-[#007BFF] text-white rounded-lg text-sm font-semibold flex items-center justify-center hover:bg-[#0056b3] transition-colors duration-300 shadow-lg"
                       >
                         Iniciar Diagnóstico
                       </button>
-              </div>
+                    </div>
 
                     {/* Badges de Status */}
-                    <div className="flex items-center space-x-4 mb-8">
-                      <div className="flex items-center bg-emerald-50 px-3 py-1.5 rounded-lg">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
-                        <p className="text-sm font-medium text-emerald-700">Análise Personalizada</p>
+                    <div className="flex flex-wrap gap-2 sm:gap-4 mb-6 sm:mb-8">
+                      <div className="flex items-center bg-emerald-50 px-2 sm:px-3 py-1.5 rounded-lg">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2" />
+                        <p className="text-xs sm:text-sm font-medium text-emerald-700">Análise Personalizada</p>
                       </div>
-                      <div className="flex items-center bg-blue-50 px-3 py-1.5 rounded-lg">
+                      <div className="flex items-center bg-blue-50 px-2 sm:px-3 py-1.5 rounded-lg">
                         <Clock className="h-4 w-4 text-[#007BFF] mr-2" />
-                        <p className="text-sm font-medium text-[#007BFF]">Em menos de 1 minuto</p>
+                        <p className="text-xs sm:text-sm font-medium text-[#007BFF]">Em menos de 1 minuto</p>
                       </div>
                     </div>
 
                     {/* Seção de IA */}
-                    <div className="bg-[#007BFF]/5 p-4 rounded-xl border border-[#007BFF]/10 mb-8">
-                      <div className="flex items-start space-x-4">
-                        <div className="bg-white p-2.5 rounded-xl shadow-md">
-                          <BarChart2 className="h-5 w-5 text-[#007BFF]" />
+                    <div className="bg-[#007BFF]/5 p-3 sm:p-4 rounded-xl border border-[#007BFF]/10 mb-6">
+                      <div className="flex items-start space-x-3 sm:space-x-4">
+                        <div className="bg-white p-2 sm:p-2.5 rounded-xl shadow-md flex-shrink-0">
+                          <BarChart2 className="h-4 w-4 sm:h-5 sm:w-5 text-[#007BFF]" />
                         </div>
                         <div>
-                          <h4 className="text-[#007BFF] font-semibold mb-1 flex items-center">
-                            Inteligência Artificial em Ação
-                            <span className="ml-2 bg-[#007BFF]/10 text-[#007BFF] text-xs font-medium px-2 py-0.5 rounded-full">Powered by AI</span>
+                          <h4 className="text-[#007BFF] font-semibold mb-1 flex flex-wrap items-center gap-2">
+                            <span className="text-sm sm:text-base">Inteligência Artificial em Ação</span>
+                            <span className="bg-[#007BFF]/10 text-[#007BFF] text-xs font-medium px-2 py-0.5 rounded-full">Powered by AI</span>
                           </h4>
-                          <p className="text-gray-600 text-sm leading-relaxed">Nossa IA analisa mais de 8 áreas do marketing do seu negócio para gerar insights precisos e tarefas personalizadas</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Grid de Métricas com Visual Aprimorado */}
-                    <div className="grid grid-cols-2 gap-6 mb-8">
-                      {/* Presença Digital */}
-                      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Globe className="h-4 w-4 text-[#007BFF]" />
-                              <p className="text-sm font-semibold text-gray-900">Presença Digital</p>
-                            </div>
-                            <div className="flex items-baseline space-x-1">
-                              <h4 className="text-3xl font-bold text-[#007BFF]">85</h4>
-                              <span className="text-lg text-gray-400">/100</span>
-                            </div>
-                          </div>
-                          <div className="bg-white p-2.5 rounded-xl shadow-md">
-                            <Target className="h-6 w-6 text-[#007BFF]" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#007BFF] to-[#40A9FF] rounded-full" style={{ width: '85%' }}></div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500">Performance</span>
-                            <span className="text-[#007BFF] font-medium">Excelente</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* CRM */}
-                      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Users className="h-4 w-4 text-[#007BFF]" />
-                              <p className="text-sm font-semibold text-gray-900">CRM</p>
-                            </div>
-                            <div className="flex items-baseline space-x-1">
-                              <h4 className="text-3xl font-bold text-[#007BFF]">92</h4>
-                              <span className="text-lg text-gray-400">/100</span>
-                            </div>
-                          </div>
-                          <div className="bg-white p-2.5 rounded-xl shadow-md">
-                            <BarChart className="h-6 w-6 text-[#007BFF]" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#007BFF] to-[#40A9FF] rounded-full" style={{ width: '92%' }}></div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500">Performance</span>
-                            <span className="text-[#007BFF] font-medium">Excepcional</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Redes Sociais */}
-                      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Share2 className="h-4 w-4 text-[#007BFF]" />
-                              <p className="text-sm font-semibold text-gray-900">Redes Sociais</p>
-                            </div>
-                            <div className="flex items-baseline space-x-1">
-                              <h4 className="text-3xl font-bold text-[#007BFF]">78</h4>
-                              <span className="text-lg text-gray-400">/100</span>
-                            </div>
-                          </div>
-                          <div className="bg-white p-2.5 rounded-xl shadow-md">
-                            <Users className="h-6 w-6 text-[#007BFF]" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#007BFF] to-[#40A9FF] rounded-full" style={{ width: '78%' }}></div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500">Performance</span>
-                            <span className="text-[#007BFF] font-medium">Muito Bom</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Conteúdo */}
-                      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <FileText className="h-4 w-4 text-[#007BFF]" />
-                              <p className="text-sm font-semibold text-gray-900">Conteúdo</p>
-                            </div>
-                            <div className="flex items-baseline space-x-1">
-                              <h4 className="text-3xl font-bold text-[#007BFF]">81</h4>
-                              <span className="text-lg text-gray-400">/100</span>
-                            </div>
-                          </div>
-                          <div className="bg-white p-2.5 rounded-xl shadow-md">
-                            <MessageCircle className="h-6 w-6 text-[#007BFF]" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#007BFF] to-[#40A9FF] rounded-full" style={{ width: '81%' }}></div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-500">Progresso</span>
-                            <span className="text-[#007BFF] font-medium">81%</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Score Total Aprimorado */}
-                    <div className="bg-gradient-to-r from-[#007BFF] to-[#00A6FF] rounded-lg p-6 text-white">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Award className="h-5 w-5" />
-                            <p className="text-sm font-medium opacity-90">Score Total</p>
-                          </div>
-                          <div className="flex items-baseline space-x-3">
-                            <h3 className="text-4xl font-bold">84</h3>
-                            <div className="flex items-center bg-white/20 px-2 py-1 rounded-full">
-                              <TrendingUp className="h-4 w-4 mr-1" />
-                              <span className="text-sm font-medium">+12%</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-                          <Award className="h-8 w-8" />
+                          <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">Nossa IA analisa mais de 8 áreas do marketing do seu negócio para gerar insights precisos e tarefas personalizadas</p>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="absolute -z-10 inset-0 bg-gradient-to-br from-[#007BFF]/10 to-transparent rounded-xl transform translate-x-4 translate-y-4"></div>
+              <div className="absolute -z-10 inset-0 bg-gradient-to-br from-[#007BFF]/5 to-transparent rounded-xl transform translate-x-4 translate-y-4" />
             </motion.div>
           </div>
         </div>
@@ -635,8 +502,8 @@ function App() {
 
                   <div className="bg-red-50 p-6 rounded-xl">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-red-600">Taxa de Conversão</span>
-                      <span className="text-2xl font-bold text-red-600">2.5%</span>
+                      <span className="text-sm font-medium text-red-600">Retorno sobre o Investimento</span>
+                      <span className="text-2xl font-bold text-red-600">1.2x</span>
                     </div>
                     <div className="h-2 bg-red-200 rounded-full overflow-hidden">
                       <div className="h-full bg-red-500 rounded-full" style={{ width: '25%' }}></div>
@@ -695,8 +562,8 @@ function App() {
 
                   <div className="bg-[#007BFF]/5 p-6 rounded-xl">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-[#007BFF]">Taxa de Conversão</span>
-                      <span className="text-2xl font-bold text-[#007BFF]">8.7%</span>
+                      <span className="text-sm font-medium text-[#007BFF]">Retorno sobre o Investimento</span>
+                      <span className="text-2xl font-bold text-[#007BFF]">4.8x</span>
                     </div>
                     <div className="h-2 bg-[#007BFF]/10 rounded-full overflow-hidden">
                       <div className="h-full bg-[#007BFF] rounded-full" style={{ width: '87%' }}></div>
@@ -1123,20 +990,20 @@ function App() {
                   <span className="text-sm text-[#007BFF] bg-[#007BFF]/10 px-4 py-1.5 rounded-full border border-[#007BFF] whitespace-nowrap shadow-sm">Produto</span>
                 </div>
                 <p className="text-gray-600 mb-6">Solução essencial para iniciar sua jornada com IA</p>
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Diagnóstico básico</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Dashboard simplificado</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">1 projeto</span>
-                  </div>
-                </div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Diagnóstico com IA
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Recomendações inteligentes
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Relatório do diagnóstico
+                  </li>
+                </ul>
                 <div className="text-center">
                   <button 
                     onClick={() => {
@@ -1164,26 +1031,27 @@ function App() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="group relative bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-[#007BFF] hover:shadow-2xl transition-all duration-300"
             >
+              <div className="absolute inset-0 bg-gradient-to-br from-[#007BFF]/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="p-8 relative">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-[#007BFF] mb-2 sm:mb-0">Futuree AI Premium</h3>
                   <span className="text-sm text-[#007BFF] bg-[#007BFF]/10 px-4 py-1.5 rounded-full border border-[#007BFF] whitespace-nowrap shadow-sm">Produto Premium</span>
                 </div>
                 <p className="text-gray-600 mb-6">Solução completa para otimizar seus resultados</p>
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Diagnóstico completo e detalhado</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Benchmarking avançado</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Projetos ilimitados</span>
-                  </div>
-                </div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Benchmarking avançado
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Gestão de projetos
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Funis de vendas
+                  </li>
+                </ul>
                 <div className="text-center">
                   <button 
                     onClick={() => {
@@ -1213,34 +1081,32 @@ function App() {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-[#007BFF]/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="p-8 relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Futuree AI Enterprise</h3>
-                  <div className="bg-[#007BFF]/10 p-2 rounded-lg">
-                    <Building2 className="h-6 w-6 text-[#007BFF]" />
-                  </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-[#007BFF] mb-2 sm:mb-0">Futuree AI Enterprise</h3>
+                  <span className="text-sm text-[#007BFF] bg-[#007BFF]/10 px-4 py-1.5 rounded-full border border-[#007BFF] whitespace-nowrap shadow-sm">Produto + Assessoria</span>
                 </div>
                 <p className="text-gray-600 mb-6">Solução personalizada para grandes empresas</p>
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Tudo do premium</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Assessoria especializada</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-3" />
-                    <span className="text-gray-700">Suporte dedicado</span>
-                  </div>
-                </div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Assessoria especializada
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Cuidamos da sua presença digital
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Suporte dedicado
+                  </li>
+                </ul>
                 <div className="text-center">
-                <button
-                  onClick={() => setIsAgendaModalOpen(true)}
+                  <button
+                    onClick={() => setIsAgendaModalOpen(true)}
                     className="inline-flex items-center justify-center w-full px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-[#40A9FF] to-[#1890FF] hover:from-[#69B9FF] hover:to-[#40A9FF] rounded-lg transition-all duration-300"
-                >
-                  Agendar Reunião
-                </button>
+                  >
+                    Agendar Reunião
+                  </button>
                   <div className="mt-4 text-center text-sm text-gray-500">
                     <span className="flex items-center justify-center">
                       <Award className="h-4 w-4 mr-1" />
@@ -1625,27 +1491,27 @@ function App() {
                 <ul className="space-y-4 mb-8">
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                    Diagnóstico básico com score geral
+                    Diagnóstico com IA
                   </li>
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                    Recomendações iniciais
+                    Recomendações inteligentes
                   </li>
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                    Dashboard simplificado
+                    Relatório do diagnóstico
                   </li>
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                    1 projeto
+                    Identificação de áreas
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
+                    Média do mercado
                   </li>
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
                     Suporte por email
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                    Acesso à comunidade
                   </li>
                 </ul>
                 <div className="text-center">
@@ -1699,33 +1565,33 @@ function App() {
                 <ul className="space-y-4 mb-8">
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                      Diagnóstico completo e detalhado
-                  </li>
+                      Tudo do Futuree AI
+                    </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
                       Benchmarking avançado
-                  </li>
+                    </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                      Plano de ação personalizado
-                  </li>
+                      Gestão de projetos
+                    </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                      Projetos ilimitados
-                  </li>
+                      Funis de vendas
+                    </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                      Suporte prioritário
-                  </li>
+                      Identificação de Persona
+                    </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
                       Relatórios customizados
-                  </li>
+                    </li>
                     <li className="flex items-center text-gray-700">
                       <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                      Consultoria mensal
-                  </li>
-              </ul>
+                      Suporte prioritário
+                    </li>
+                </ul>
                   <div className="text-center">
                 <button
                   onClick={() => {
@@ -1769,7 +1635,7 @@ function App() {
                 <ul className="space-y-4 mb-8">
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
-                    Tudo do premium
+                    Tudo do Futuree AI Premium
                   </li>
                   <li className="flex items-center text-gray-700">
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
@@ -1783,7 +1649,7 @@ function App() {
                     <CheckCircle2 className="h-5 w-5 text-[#007BFF] mr-2 flex-shrink-0" />
                     Suporte dedicado
                   </li>
-              </ul>
+                </ul>
                 <div className="text-center">
                 <button
                   onClick={() => setIsAgendaModalOpen(true)}

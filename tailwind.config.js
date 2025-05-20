@@ -6,48 +6,71 @@ export default {
   ],
   darkMode: 'class',
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
       colors: {
-        brand: {
-          dark: '#01579b',    // azul escuro
-          medium: '#0288d1',  // azul médio
-          light: '#b3e5fc',   // azul claro
-          white: '#ffffff',   // branco
-          black: '#212121'    // preto
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
-        gray: {
-          light: '#f5f5f5',  // cinza claro
-          medium: '#9e9e9e',  // cinza médio
-          dark: '#212121'     // preto
-        }
-      },
-      fontFamily: {
-        sans: ['Inter var', 'system-ui, sans-serif'],
-      },
-      boxShadow: {
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-      },
-      backgroundImage: {
-        'gradient-brand': 'linear-gradient(to right, #01579b, #0288d1)',
-        'gradient-light': 'linear-gradient(to right, #b3e5fc, #ffffff)',
-        'pattern': "url('/pattern.svg')",
-      },
-      spacing: {
-        '18': '4.5rem',
-        '22': '5.5rem',
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
       },
       borderRadius: {
-        'xl': '1rem',
-        '2xl': '1.5rem',
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
-      transitionDuration: {
-        '400': '400ms',
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
       },
-      gridTemplateColumns: {
-        'services': 'repeat(auto-fit, minmax(280px, 1fr))',
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require("tailwindcss-animate"),
+  ],
 }

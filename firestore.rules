@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Funções auxiliares
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasPermission(permissions) {
+      return isAuthenticated() && (
+        request.auth.uid in (permissions || [])
+      );
+    }
+
+    // Regras para feedback de usuários
+    match /user_feedback/{feedbackId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        hasPermission(resource.data.user_permissions)
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5 &&
+        request.resource.data.text is string &&
+        request.resource.data.createdAt is timestamp
+      );
+    }
+
+    // Regras específicas para as subcoleções de usuários
+    match /users/{userId}/personas/{personaId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/competitors/data {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/sectors/data {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/metrics/data {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Regra geral para documentos de usuário
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Regra geral para outras coleções
+    match /{collection}/{documentId} {
+      allow read: if isAuthenticated() && (
+        // Permite leitura se for dono do documento
+        (resource.data.userId == request.auth.uid || resource.data.user_id == request.auth.uid) ||
+        // Ou se tiver permissão específica
+        hasPermission(resource.data.user_permissions) ||
+        // Ou se for um documento do próprio usuário
+        (collection == 'users' && documentId == request.auth.uid)
+      );
+
+      allow create: if isAuthenticated() && (
+        // Permite criar se o userId do documento for o mesmo do usuário autenticado
+        request.resource.data.userId == request.auth.uid ||
+        // Ou se for um documento do próprio usuário
+        (collection == 'users' && documentId == request.auth.uid)
+      );
+
+      allow update, delete: if isAuthenticated() && (
+        // Permite atualizar/deletar se for dono do documento
+        (resource.data.userId == request.auth.uid || resource.data.user_id == request.auth.uid) ||
+        // Ou se tiver permissão específica
+        hasPermission(resource.data.user_permissions) ||
+        // Ou se for um documento do próprio usuário
+        (collection == 'users' && documentId == request.auth.uid)
+      );
+
+      // Regras aninhadas para subcoleções
+      match /{document=**} {
+        allow read, write: if isAuthenticated() && (
+          resource.data.userId == request.auth.uid ||
+          hasPermission(resource.data.user_permissions)
+        );
+      }
+    }
+  }
+} 

@@ -1,71 +1,69 @@
-# Futuree AI
+# Backend do Chatbot OpenAI
 
-Plataforma de diagnóstico e otimização de marketing digital com inteligência artificial.
+Backend simples e prático para o chatbot OpenAI do nosso SaaS.
 
-## 🚀 Funcionalidades
-
-- **Diagnóstico Inteligente**: Análise completa da sua estratégia de marketing digital
-- **Dashboard Personalizado**: Visualização clara dos seus resultados e métricas
-- **Recomendações Práticas**: Sugestões acionáveis baseadas em dados
-- **Agendamento de Demonstrações**: Sistema integrado com Google Calendar
-- **Relatórios Detalhados**: Exportação de relatórios em PDF
-
-## 🛠️ Tecnologias
-
-- React
-- TypeScript
-- Tailwind CSS
-- Supabase
-- Firebase
-- Framer Motion
-- Headless UI
-- Recharts
-- Lucide Icons
-
-## 📦 Instalação
+## Instalação
 
 1. Clone o repositório
+2. Instale as dependências:
 ```bash
-git clone https://github.com/seu-usuario/futuree-ai.git
-```
-
-2. Instale as dependências
-```bash
-cd futuree-ai
 npm install
 ```
 
-3. Configure as variáveis de ambiente
-```bash
-cp .env.example .env
+3. Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+```env
+OPENAI_API_KEY=sua_chave_aqui
+PORT=3000
 ```
-Preencha as variáveis no arquivo `.env` com suas credenciais.
 
-4. Inicie o servidor de desenvolvimento
+## Uso
+
+1. Para iniciar o servidor em modo desenvolvimento (com hot-reload):
 ```bash
 npm run dev
 ```
 
-## 🗄️ Estrutura do Banco de Dados
+2. Para iniciar o servidor em modo produção:
+```bash
+npm start
+```
 
-### Tabela: agendamentos
-- `id`: UUID (primary key)
-- `nome`: text
-- `email`: text
-- `empresa`: text
-- `telefone`: text
-- `status`: text (default: 'pendente')
-- `created_at`: timestamp
-- `updated_at`: timestamp
-- `horario_agendado`: timestamp
-- `observacoes`: text
+## Endpoints
 
-## 🔐 Segurança
+### POST /chat
+Endpoint principal para processar mensagens do chatbot.
 
-- Row Level Security (RLS) configurado no Supabase
-- Autenticação via Firebase
-- Proteção de rotas para usuários autenticados
+Exemplo de requisição:
+```json
+{
+  "message": "Como melhorar minha estratégia de marketing digital?",
+  "context": "Contexto adicional (opcional)"
+}
+```
 
-## 📄 Licença
+Exemplo de resposta:
+```json
+{
+  "success": true,
+  "message": "Resposta do chatbot...",
+  "usage": {
+    "prompt_tokens": 123,
+    "completion_tokens": 456,
+    "total_tokens": 579
+  }
+}
+```
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes. 
+### GET /health
+Endpoint para verificar o status do servidor.
+
+## Integração com o Frontend
+
+Para integrar com o frontend existente, atualize o arquivo de configuração da API no frontend (`src/config/openai.ts`) com a URL do backend:
+
+```typescript
+export const API_CONFIG = {
+  baseUrl: 'http://localhost:3000',
+  endpoint: '/chat'
+};
+``` 

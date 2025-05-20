@@ -131,13 +131,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
         })}
         onSubmit={handleSubmit}
       >
-        {({ errors, touched, status }) => (
+        {({ errors, touched, status, handleSubmit: formikHandleSubmit }) => (
           <form 
             className="space-y-4 sm:space-y-6"
-            method="post"
             onSubmit={(e) => {
               e.preventDefault();
-              handleSubmit({ email: e.currentTarget.email.value, password: e.currentTarget.password.value });
+              formikHandleSubmit(e);
             }}
           >
             <div className="text-center">

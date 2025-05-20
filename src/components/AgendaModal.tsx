@@ -167,8 +167,8 @@ export function AgendaModal({ isOpen, onClose }: AgendaModalProps) {
                           placeholder="Seu telefone"
                           className="block w-full pl-8 sm:pl-10 pr-3 py-2 text-sm sm:text-base border border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#1890FF] focus:border-transparent bg-gray-50/50 transition-all duration-200"
                         />
-                      </div>
-                    </div>
+          </div>
+        </div>
 
                     <button
                       type="submit"

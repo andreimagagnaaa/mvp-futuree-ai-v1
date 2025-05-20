@@ -25,7 +25,7 @@ import {
   BookOpenIcon,
   ClipboardDocumentListIcon
 } from "@heroicons/react/24/outline";
-import { Rocket } from "lucide-react";
+import { Rocket, Calendar as CalendarIcon } from "lucide-react";
 import { Tab } from '@headlessui/react';
 import { AgendaModal } from "../components/AgendaModal";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
@@ -34,6 +34,7 @@ import jsPDF from 'jspdf';
 import { areas } from '../data/areas';
 import { supabase } from "../config/supabase";
 import { classNames } from '../utils/classNames';
+import { UpgradeButton } from '../components/UpgradeButton';
 
 interface DiagnosticData {
   completedAt: any;
@@ -89,6 +90,14 @@ interface ProgressCardProps {
 interface TaskProgress {
   completed: boolean;
   points: number;
+}
+
+interface TaskProgressData {
+  task_id: string;
+  user_id: string;
+  status: 'pending' | 'completed';
+  completed_at?: string | null;
+  updated_at: string;
 }
 
 interface TaskRecommendation {
@@ -159,7 +168,7 @@ const getMetricClassification = (score: number, type: string): MetricClassificat
 
 const calculateMetrics = (scores: Record<string, number> = {}) => {
   // Lista completa de todas as áreas esperadas
-  const expectedAreas = [
+  const areasEsperadas = [
     'Geração de Leads',
     'Conversão',
     'Canais de Aquisição',
@@ -167,7 +176,7 @@ const calculateMetrics = (scores: Record<string, number> = {}) => {
     'CRM e Relacionamento',
     'Análise de Dados',
     'Presença Digital',
-    'Automações'
+    'Automação'
   ];
 
   console.log('Scores recebidos:', scores);
@@ -178,7 +187,7 @@ const calculateMetrics = (scores: Record<string, number> = {}) => {
     return {
       monthlyGrowth: 0,
       strongAreas: 0,
-      weakAreas: expectedAreas.length,
+      weakAreas: areasEsperadas.length,
       efficiency: 0,
       engagement: 0,
       automation: 0,
@@ -187,7 +196,7 @@ const calculateMetrics = (scores: Record<string, number> = {}) => {
   }
 
   // Normaliza os scores para garantir que todas as áreas esperadas tenham um valor
-  const normalizedScores = expectedAreas.reduce((acc, area) => {
+  const normalizedScores = areasEsperadas.reduce((acc, area) => {
     acc[area] = scores[area] || 0;
     return acc;
   }, {} as Record<string, number>);
@@ -195,29 +204,29 @@ const calculateMetrics = (scores: Record<string, number> = {}) => {
   console.log('Scores normalizados:', normalizedScores);
 
   // Cálculo de áreas fortes (score >= 7) e fracas (score < 5)
-  const strongAreas = expectedAreas.reduce((count, area) => {
+  const strongAreas = areasEsperadas.reduce((count, area) => {
     const score = normalizedScores[area];
     return count + (score >= 7 ? 1 : 0);
   }, 0);
 
-  const weakAreas = expectedAreas.reduce((count, area) => {
+  const weakAreas = areasEsperadas.reduce((count, area) => {
     const score = normalizedScores[area];
     return count + (score < 5 ? 1 : 0);
   }, 0);
 
   // Cálculo do score total (soma direta dos scores)
-  const totalScore = expectedAreas.reduce((sum, area) => sum + normalizedScores[area], 0);
+  const totalScore = areasEsperadas.reduce((sum, area) => sum + normalizedScores[area], 0);
   console.log('Score total calculado:', totalScore);
 
   // Cálculo de eficiência operacional (média dos scores)
-  const avgEfficiency = totalScore / expectedAreas.length;
+  const avgEfficiency = totalScore / areasEsperadas.length;
 
   // Cálculo de engajamento digital
   const digitalAreas = ['Presença Digital', 'Conteúdo', 'Canais de Aquisição'];
   const digitalScore = digitalAreas.reduce((sum, area) => sum + (normalizedScores[area] || 0), 0) / digitalAreas.length;
 
   // Cálculo de automação
-  const automationScore = normalizedScores['Automações'] || 0;
+  const automationScore = normalizedScores['Automação'] || 0;
 
   // Cálculo do crescimento mensal
   const monthlyGrowth = calculateMonthlyGrowth(normalizedScores);
@@ -300,14 +309,14 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ lastDiagnosticDate, score, 
   const navigate = useNavigate();
 
   const getScoreColor = (score: number) => {
-    if (score >= 56) return { // 7 * 8 = 56 (70% de 80)
+    if (score >= 56) return { // 70% de 80
       text: 'text-green-600',
       bg: 'bg-green-50',
       border: 'border-green-200',
       progress: 'bg-green-500',
       hover: 'hover:bg-green-600'
     };
-    if (score >= 40) return { // 5 * 8 = 40 (50% de 80)
+    if (score >= 40) return { // 50% de 80
       text: 'text-yellow-600',
       bg: 'bg-yellow-50',
       border: 'border-yellow-200',
@@ -502,6 +511,7 @@ export default function ReportPage() {
   const [userLevel, setUserLevel] = useState<number>(1);
   const [userXP, setUserXP] = useState<number>(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [completedTasks, setCompletedTasks] = useState(0);
 
     const loadUserData = async () => {
       if (!currentUser) {
@@ -523,6 +533,7 @@ export default function ReportPage() {
 
     const data = userDoc.data() as UserData;
     console.log("Dados brutos do diagnóstico:", data.diagnostic);
+    console.log("Scores brutos:", data.diagnostic?.scores);
 
     if (!data.hasCompletedDiagnostic) {
       console.log("Usuário sem diagnóstico, redirecionando...");
@@ -530,10 +541,19 @@ export default function ReportPage() {
           return;
         }
 
-    // Garante que todos os dados necessários estejam presentes
+    // Garante que todos os dados necessários estejam presentes e normaliza os nomes das áreas
+    const normalizedScores = Object.entries(data.diagnostic?.scores || {}).reduce((acc, [area, score]) => {
+      // Normaliza o nome da área se necessário
+      const normalizedArea = area === 'Automações' ? 'Automação' : area;
+      acc[normalizedArea] = score;
+      return acc;
+    }, {} as Record<string, number>);
+
+    console.log("Scores normalizados:", normalizedScores);
+
     const diagnostic = {
       ...data.diagnostic,
-      scores: data.diagnostic?.scores || {},
+      scores: normalizedScores,
       totalScore: data.diagnostic?.totalScore || 0,
       completedAt: data.diagnostic?.completedAt || null,
       previousScore: data.diagnostic?.previousScore || null,
@@ -541,8 +561,7 @@ export default function ReportPage() {
       insights: data.diagnostic?.insights || []
     };
 
-    console.log("Scores do diagnóstico:", diagnostic.scores);
-    console.log("Score total do diagnóstico:", diagnostic.totalScore);
+    console.log("Diagnostic final:", diagnostic);
 
     setUserData({
       ...data,
@@ -568,14 +587,16 @@ export default function ReportPage() {
       try {
         setLoadingTasks(true);
         const clientType = userData.diagnostic.answers?.['9'] === '9a' ? 'B2C' : 'B2B';
+        
+        // Filtra áreas com score "Precisa Melhorar" ou "Bom"
         const validAreas = Object.entries(userData.diagnostic.scores)
           .filter(([area, score]) => {
+            if (typeof score !== 'number') return false;
             const classification = getScoreClassification(score);
-            return area !== 'Perfil do Cliente' && 
-                   (classification === 'Precisa Melhorar' || classification === 'Bom');
+            return area !== 'Perfil do Cliente' && classification !== 'Excelente';
           })
           .map(([area, score]) => ({
-            area,
+            area: area === 'Automações' ? 'Automação' : area,
             score: getScoreClassification(score)
           }));
 
@@ -587,14 +608,35 @@ export default function ReportPage() {
             .select('*')
             .eq('area', area)
             .eq('score', score)
-            .eq('tipo_cliente', clientType);
+            .or(`tipo_cliente.eq.${clientType},tipo_cliente.is.null`);
 
-          if (!error && data) {
+          if (!error && data && data.length > 0) {
             allRecommendations.push(...data);
           }
         }
 
         setRecommendations(allRecommendations);
+
+        // Carrega o progresso das tarefas
+        if (currentUser?.uid) {
+          const { data: progressData } = await supabase
+            .from('task_progress')
+            .select('*')
+            .eq('user_id', currentUser.uid);
+
+          if (progressData) {
+            const progress = progressData.reduce((acc, item) => {
+              acc[item.task_id] = {
+                completed: item.status === 'completed',
+                points: item.status === 'completed' ? 100 : 0
+              };
+              return acc;
+            }, {} as Record<string, TaskProgress>);
+
+            setTaskProgress(progress);
+            setCompletedTasks(progressData.filter(p => p.status === 'completed').length);
+          }
+        }
       } catch (error) {
         console.error('Erro ao buscar recomendações:', error);
       } finally {
@@ -603,7 +645,7 @@ export default function ReportPage() {
     };
 
     fetchRecommendations();
-  }, [userData?.diagnostic?.scores, userData?.diagnostic?.answers]);
+  }, [userData?.diagnostic?.scores, userData?.diagnostic?.answers, currentUser]);
 
   useEffect(() => {
     const calculateTaskProgress = () => {
@@ -693,7 +735,7 @@ export default function ReportPage() {
           'CRM e Relacionamento',
           'Análise de Dados',
           'Presença Digital',
-          'Automações'
+          'Automação'
         ];
 
         // Função para obter áreas com score ou sem score (considerando como 0)
@@ -1151,10 +1193,10 @@ export default function ReportPage() {
                     </div>
                   </div>
 
-                  {/* Fonte Principal de Leads B2B */}
+                  {/* Fonte Principal de Leads */}
                   <div className="bg-yellow-50/50 rounded-xl p-4">
                     <div className="flex flex-col">
-                      <span className="text-sm text-gray-600">Fonte Principal de Leads B2B</span>
+                      <span className="text-sm text-gray-600">Fonte Principal de Leads</span>
                       <div className="flex items-baseline mt-1">
                         <span className="text-2xl font-bold text-gray-900">Founder-led growth</span>
                         <span className="text-sm text-gray-500 ml-1">em 2025</span>
@@ -1244,7 +1286,7 @@ export default function ReportPage() {
                       {(() => {
                         const digitalScore = (
                           (scores['Presença Digital'] || 0) +
-                          (scores['Automações'] || 0) +
+                          (scores['Automação'] || 0) +
                           (scores['Análise de Dados'] || 0)
                         ) / 3;
                         return digitalScore >= 7 ? 'Avançada' :
@@ -1259,7 +1301,7 @@ export default function ReportPage() {
                       {(() => {
                         const execScore = (
                           (scores['CRM e Relacionamento'] || 0) +
-                          (scores['Automações'] || 0)
+                          (scores['Automação'] || 0)
                         ) / 2;
                         return execScore >= 7 ? 'Rápida' :
                                execScore >= 5 ? 'Moderada' :
@@ -1271,14 +1313,14 @@ export default function ReportPage() {
         </div>
 
               {/* Card de Tendências 2025 */}
-              <div className="bg-white rounded-2xl shadow-lg p-8">
-                <div className="flex items-start space-x-3">
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <div className="flex items-center space-x-3 mb-6">
                   <div className="p-2 rounded-lg bg-purple-50">
-                    <BoltIcon className="w-5 h-5 text-purple-600" />
+                    <TrophyIcon className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">Tendências 2025 e Média de Mercado</h3>
-                    <p className="text-sm text-gray-500">Tendências para 2025</p>
+                    <h3 className="text-xl font-semibold text-gray-900">Tendências 2025 em Marketing Digital</h3>
+                    <p className="text-sm text-gray-500">Principais tendências e oportunidades</p>
                   </div>
                 </div>
 
@@ -1339,7 +1381,7 @@ export default function ReportPage() {
                         { area: 'CRM e Relacionamento', score: scores['CRM e Relacionamento'] || 0, media: 7 },
                         { area: 'Análise de Dados', score: scores['Análise de Dados'] || 0, media: 7 },
                         { area: 'Presença Digital', score: scores['Presença Digital'] || 0, media: 7 },
-                        { area: 'Automações', score: scores['Automações'] || 0, media: 7 }
+                        { area: 'Automação', score: scores['Automação'] || 0, media: 7 }
                       ].sort((a, b) => b.score - a.score)} // Ordenar por score decrescente
                       margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                     >
@@ -1899,23 +1941,51 @@ export default function ReportPage() {
           return { text: 'Média Prioridade', bg: 'bg-yellow-50', textColor: 'text-yellow-700' };
         };
 
-        const handleTaskComplete = (taskId: string) => {
+        const handleTaskComplete = async (taskId: string) => {
           const currentProgress = taskProgress[taskId] || { completed: false, points: 0 };
           const isCompleting = !currentProgress.completed;
+          const now = new Date().toISOString();
 
-          const newProgress = {
-            ...taskProgress,
-            [taskId]: {
-              completed: isCompleting,
-              points: isCompleting ? 100 : 0
+          try {
+            const updateData: TaskProgressData = {
+              task_id: taskId,
+              user_id: currentUser?.uid,
+              status: isCompleting ? 'completed' : 'pending',
+              updated_at: now,
+              completed_at: isCompleting ? now : null
+            };
+
+            // Atualiza o progresso no Supabase
+            const { error } = await supabase
+              .from('task_progress')
+              .upsert(updateData);
+
+            if (error) {
+              console.error('Erro ao salvar progresso:', error);
+              return;
             }
-          };
 
-          setTaskProgress(newProgress);
+            // Atualiza o estado local
+            const newProgress = {
+              ...taskProgress,
+              [taskId]: {
+                completed: isCompleting,
+                points: isCompleting ? 100 : 0
+              }
+            };
 
-          if (isCompleting) {
-            setShowConfetti(true);
-            setTimeout(() => setShowConfetti(false), 2000);
+            setTaskProgress(newProgress);
+
+            // Atualiza o contador de tarefas concluídas
+            const completedCount = Object.values(newProgress).filter(p => p.completed).length;
+            setCompletedTasks(completedCount);
+
+            if (isCompleting) {
+              setShowConfetti(true);
+              setTimeout(() => setShowConfetti(false), 2000);
+            }
+          } catch (error) {
+            console.error('Erro ao atualizar progresso da tarefa:', error);
           }
         };
 
@@ -2187,7 +2257,7 @@ export default function ReportPage() {
           return "Comece a coletar e analisar dados básicos de performance.";
         case "Presença Digital":
           return "Fortaleça sua presença nas principais redes sociais e mantenha consistência.";
-        case "Automações":
+        case "Automação":
           return "Identifique processos repetitivos que podem ser automatizados.";
         default:
           return "Desenvolva uma estratégia básica para esta área.";
@@ -2206,25 +2276,18 @@ export default function ReportPage() {
                 Futuree AI
               </a>
               {/* Menu mobile */}
-              <div className="flex sm:hidden items-center space-x-2">
+              <div className="flex flex-col sm:hidden items-center space-y-2">
+                <UpgradeButton
+                  plano="premium"
+                  className="p-2 text-blue-600"
+                />
                 <button
                   onClick={() => setIsAgendaModalOpen(true)}
-                  className="p-2 text-gray-600 hover:text-gray-900"
-                  aria-label="Agendar Reunião"
+                  className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                  <CalendarIcon className="w-5 h-5 mr-2" />
+                  Agendar Reunião
                 </button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/dashboard')}
-                  className="p-2 text-blue-600 hover:text-blue-800"
-                  aria-label="Upgrade"
-                >
-                  <Rocket className="w-6 h-6" />
-                </motion.button>
               </div>
             </div>
             {/* Botões desktop */}
@@ -2233,27 +2296,13 @@ export default function ReportPage() {
                 onClick={() => setIsAgendaModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <CalendarIcon className="w-5 h-5 mr-2" />
                 Agendar Reunião
               </button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/dashboard')}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#40A9FF] via-[#1890FF] to-[#40A9FF] rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 group overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#69B9FF] via-[#40A9FF] to-[#69B9FF] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center">
-                  <Rocket className="w-5 h-5 mr-2 transform group-hover:rotate-12 transition-transform duration-300" />
-                  <span className="relative">
-                    Upgrade
-                    <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
-                  </span>
-                </div>
-                <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
-              </motion.button>
+              <UpgradeButton
+                plano="premium"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium"
+              />
             </div>
           </div>
         </div>
