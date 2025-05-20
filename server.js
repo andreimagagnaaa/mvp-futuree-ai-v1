@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 let port = process.env.PORT || 5173;
-const alternativePorts = [5174, 5175, 5176, 5177];
+const alternativePorts = [5000, 5174, 5175, 5176, 5177];
 
 // Configuração do CORS
 app.use(cors({
@@ -73,8 +73,8 @@ server.on('error', (error) => {
 // Evento quando o servidor começa a escutar
 server.on('listening', () => {
   console.log(`✨ Servidor Futuree AI rodando com sucesso na porta ${port}`);
-  console.log(`🌐 Frontend: http://localhost:${port}`);
-  console.log(`🚀 API: http://localhost:${port}/api`);
+  console.log(`🌐 Frontend: http://85.31.63.187:${port}`);
+  console.log(`🚀 API: http://85.31.63.187:${port}/api`);
 });
 
 // Inicia o servidor
